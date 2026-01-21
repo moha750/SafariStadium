@@ -36,9 +36,7 @@
   "booking_date": "2024-01-20",
   "start_time": "16:00",
   "end_time": "18:00",
-  "status": "pending",
-  "reminder_time": "2024-01-20T14:00:00Z",
-  "reminder_sent": false
+  "status": "pending"
 }
 ```
 
@@ -55,8 +53,6 @@
     "start_time": "16:00:00",
     "end_time": "18:00:00",
     "status": "pending",
-    "reminder_time": "2024-01-20T14:00:00+00:00",
-    "reminder_sent": false,
     "created_at": "2024-01-19T10:30:00+00:00",
     "updated_at": "2024-01-19T10:30:00+00:00"
   }
@@ -239,65 +235,6 @@ async function checkAvailability(fieldName, date, startTime, endTime) {
 
 ---
 
-## 🔔 Edge Functions
-
-### 1. إرسال تأكيد واتساب
-
-**POST** `/functions/v1/send-whatsapp-confirmation`
-
-#### Request Body
-
-```json
-{
-  "type": "UPDATE",
-  "record": {
-    "id": "uuid-here",
-    "field_name": "Safari 1",
-    "customer_name": "أحمد محمد",
-    "phone": "+966501234567",
-    "booking_date": "2024-01-20",
-    "start_time": "16:00:00",
-    "end_time": "18:00:00",
-    "status": "approved"
-  }
-}
-```
-
-#### Response
-
-```json
-{
-  "success": true,
-  "message": "Confirmation sent successfully"
-}
-```
-
----
-
-### 2. إرسال التذكيرات
-
-**POST** `/functions/v1/send-booking-reminders`
-
-يتم استدعاؤها تلقائياً عبر CRON كل 15 دقيقة.
-
-#### Response
-
-```json
-{
-  "success": true,
-  "message": "Processed 3 reminders",
-  "successCount": 3,
-  "failureCount": 0,
-  "results": [
-    { "id": "uuid-1", "success": true },
-    { "id": "uuid-2", "success": true },
-    { "id": "uuid-3", "success": true }
-  ]
-}
-```
-
----
-
 ## 🔍 عوامل التصفية المتقدمة
 
 ### Operators المتاحة
@@ -430,7 +367,6 @@ function searchBookings(query) {
 
 - **Database Size**: 500 MB
 - **Bandwidth**: 5 GB/month
-- **Edge Functions**: 500K invocations/month
 - **API Requests**: غير محدود
 
 ### توصيات
@@ -453,7 +389,6 @@ const url = `${SUPABASE_URL}/rest/v1/bookings?select=id,customer_name,status`;
 
 - [Supabase REST API Docs](https://supabase.com/docs/guides/api)
 - [PostgREST Documentation](https://postgrest.org/)
-- [WhatsApp Cloud API Docs](https://developers.facebook.com/docs/whatsapp/cloud-api)
 
 ---
 

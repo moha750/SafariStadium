@@ -1,6 +1,6 @@
 # ⚽ نظام حجز ملاعب سفاري
 
-نظام حجز إلكتروني احترافي لملاعب كرة القدم مع لوحة تحكم إدارية وإشعارات واتساب تلقائية.
+نظام حجز إلكتروني احترافي لملاعب كرة القدم مع لوحة تحكم إدارية.
 
 ## 📋 المحتويات
 
@@ -9,7 +9,6 @@
 - [هيكل المشروع](#-هيكل-المشروع)
 - [الإعداد والتثبيت](#-الإعداد-والتثبيت)
 - [إعداد Supabase](#-إعداد-supabase)
-- [إعداد WhatsApp API](#-إعداد-whatsapp-api)
 - [الاستخدام](#-الاستخدام)
 - [النشر](#-النشر)
 
@@ -31,12 +30,6 @@
 - ✅ الموافقة/الرفض بنقرة واحدة
 - ✅ تحديث تلقائي
 
-### إشعارات واتساب
-- ✅ رسالة تأكيد عند الموافقة
-- ✅ تذكير تلقائي قبل الموعد بساعتين
-- ✅ استخدام WhatsApp Cloud API الرسمي
-- ✅ منع التكرار
-
 ### قاعدة البيانات
 - ✅ Supabase PostgreSQL
 - ✅ Row Level Security (RLS)
@@ -56,11 +49,6 @@
 ### Backend
 - **Supabase** - قاعدة البيانات والمصادقة
 - **PostgreSQL** - قاعدة بيانات علائقية
-- **Edge Functions** - دوال بدون خادم (Deno)
-
-### APIs
-- **WhatsApp Cloud API** - إرسال الإشعارات
-- **Supabase REST API** - التفاعل مع قاعدة البيانات
 
 ---
 
@@ -82,9 +70,7 @@ SafariStadium/
 ├── supabase/
 │   ├── migrations/
 │   │   └── 001_create_bookings_table.sql  # إنشاء الجداول
-│   └── functions/
-│       ├── send-whatsapp-confirmation/    # إرسال التأكيد
-│       └── send-booking-reminders/        # إرسال التذكيرات
+│   └── config.toml                     # تكوين Supabase
 ├── .env.example                        # مثال متغيرات البيئة
 ├── .gitignore                          # ملفات Git المستبعدة
 └── README.md                           # هذا الملف
@@ -146,93 +132,6 @@ const SUPABASE_CONFIG = {
 2. انسخ:
    - `Project URL` → `SUPABASE_URL`
    - `anon public` → `SUPABASE_ANON_KEY`
-   - `service_role` → `SUPABASE_SERVICE_ROLE_KEY` (للـ Edge Functions فقط)
-
-### 4. نشر Edge Functions
-
-```bash
-# تثبيت Supabase CLI
-npm install -g supabase
-
-# تسجيل الدخول
-supabase login
-
-# ربط المشروع
-supabase link --project-ref your-project-ref
-
-# نشر الدوال
-supabase functions deploy send-whatsapp-confirmation
-supabase functions deploy send-booking-reminders
-
-# تعيين متغيرات البيئة
-supabase secrets set WHATSAPP_PHONE_NUMBER_ID=your_id
-supabase secrets set WHATSAPP_ACCESS_TOKEN=your_token
-```
-
-### 5. إعداد Database Webhook
-
-في Supabase Dashboard:
-
-1. اذهب إلى **Database** > **Webhooks**
-2. أنشئ webhook جديد:
-   - **Name**: `booking-approved`
-   - **Table**: `bookings`
-   - **Events**: `UPDATE`
-   - **Type**: `HTTP Request`
-   - **URL**: `https://your-project.supabase.co/functions/v1/send-whatsapp-confirmation`
-   - **HTTP Headers**: `Authorization: Bearer YOUR_ANON_KEY`
-
-### 6. إعداد CRON Job للتذكيرات
-
-في **pg_cron** (Supabase Dashboard > Database > Extensions):
-
-```sql
--- تفعيل pg_cron
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
--- إنشاء CRON job (كل 15 دقيقة)
-SELECT cron.schedule(
-    'send-booking-reminders',
-    '*/15 * * * *',
-    $$
-    SELECT net.http_post(
-        url:='https://your-project.supabase.co/functions/v1/send-booking-reminders',
-        headers:='{"Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb
-    );
-    $$
-);
-```
-
----
-
-## 📱 إعداد WhatsApp API
-
-### 1. إنشاء حساب Meta Business
-
-1. اذهب إلى [Meta Business Suite](https://business.facebook.com)
-2. أنشئ حساب تجاري جديد
-
-### 2. إعداد WhatsApp Business API
-
-1. في Meta Business Suite، اذهب إلى **WhatsApp** > **API Setup**
-2. أضف رقم هاتف
-3. احصل على:
-   - **Phone Number ID**
-   - **Access Token** (دائم)
-
-### 3. التحقق من الرقم
-
-1. أرسل رسالة تجريبية من Dashboard
-2. تحقق من استلام الرسالة
-
-### 4. إضافة أرقام المستلمين
-
-في بيئة التطوير، يجب إضافة الأرقام يدوياً:
-
-1. **Settings** > **Phone Numbers**
-2. أضف الأرقام التجريبية
-
-**ملاحظة**: في الإنتاج، تحتاج إلى موافقة Meta لإرسال رسائل لأي رقم.
 
 ---
 
@@ -265,13 +164,12 @@ php -S localhost:8000
 1. افتح الصفحة الرئيسية
 2. اختر الملعب
 3. املأ نموذج الحجز
-4. انتظر التأكيد
+4. انتظر التأكيد من الإدارة
 
 #### للإدارة:
 1. افتح `admin.html`
 2. راجع الحجوزات الجديدة
 3. اضغط "موافقة" أو "رفض"
-4. سيتم إرسال واتساب تلقائياً عند الموافقة
 
 ---
 
@@ -346,13 +244,6 @@ checkAuth();
 2. افتح Console في المتصفح وابحث عن أخطاء
 3. تحقق من RLS policies في Supabase
 
-### المشكلة: لا تصل رسائل واتساب
-
-**الحل**:
-1. تحقق من صحة `WHATSAPP_ACCESS_TOKEN`
-2. تأكد من إضافة الرقم في Meta Dashboard (بيئة التطوير)
-3. راجع logs في Supabase Functions
-
 ### المشكلة: خطأ CORS
 
 **الحل**:
@@ -390,10 +281,7 @@ checkAuth();
 للمساعدة أو الاستفسارات:
 - افتح Issue في GitHub
 - راجع التوثيق الرسمي لـ [Supabase](https://supabase.com/docs)
-- راجع توثيق [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api)
 
 ---
 
 **صُنع بـ ❤️ للمجتمع العربي**
-#   S a f a r i S t a d i u m  
- 

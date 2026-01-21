@@ -12,8 +12,6 @@ CREATE TABLE IF NOT EXISTS bookings (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    reminder_time TIMESTAMP WITH TIME ZONE,
-    reminder_sent BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -33,9 +31,6 @@ CREATE INDEX idx_bookings_date ON bookings(booking_date);
 
 -- فهرس مركب للبحث عن التعارضات
 CREATE INDEX idx_bookings_availability ON bookings(field_name, booking_date, start_time, end_time);
-
--- فهرس على وقت التذكير للحجوزات التي لم يتم إرسال تذكير لها
-CREATE INDEX idx_bookings_reminder ON bookings(reminder_time, reminder_sent) WHERE reminder_sent = FALSE;
 
 -- ========================================
 -- دالة تحديث updated_at تلقائياً
@@ -91,3 +86,8 @@ CREATE POLICY "Enable update access for all users" ON bookings
 -- VALUES 
 --     ('Safari 1', 'أحمد محمد', '+966501234567', CURRENT_DATE + 1, '16:00', '18:00', 'pending'),
 --     ('Safari 2', 'خالد علي', '+966509876543', CURRENT_DATE + 2, '19:00', '21:00', 'approved');
+
+-- ========================================
+-- ملاحظة: تم إزالة نظام التذكيرات (WhatsApp)
+-- النظام يعتمد الآن فقط على قاعدة البيانات
+-- ========================================

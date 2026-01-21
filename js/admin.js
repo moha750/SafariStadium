@@ -260,7 +260,7 @@ class AdminDashboard {
             const result = await supabaseClient.updateBookingStatus(bookingId, 'approved');
             
             if (result.success) {
-                showToast('تم تأكيد الحجز بنجاح! سيتم إرسال رسالة واتساب للعميل', 'success');
+                showToast('تم تأكيد الحجز بنجاح!', 'success');
                 await this.loadBookings();
             } else {
                 showToast('فشل في تحديث الحجز', 'error');

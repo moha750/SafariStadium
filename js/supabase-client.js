@@ -24,10 +24,6 @@ class SupabaseClient {
      */
     async createBooking(bookingData) {
         try {
-            // حساب وقت التذكير (قبل الموعد بساعتين)
-            const bookingDateTime = new Date(`${bookingData.booking_date}T${bookingData.start_time}`);
-            const reminderTime = new Date(bookingDateTime.getTime() - (2 * 60 * 60 * 1000));
-
             const payload = {
                 field_name: bookingData.field_name,
                 customer_name: bookingData.customer_name,
@@ -35,9 +31,7 @@ class SupabaseClient {
                 booking_date: bookingData.booking_date,
                 start_time: bookingData.start_time,
                 end_time: bookingData.end_time,
-                status: 'pending',
-                reminder_time: reminderTime.toISOString(),
-                reminder_sent: false
+                status: 'pending'
             };
 
             const response = await fetch(`${this.supabaseUrl}/rest/v1/bookings`, {
