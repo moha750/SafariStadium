@@ -4,7 +4,6 @@
 .env
 .env.local
 .env.production
-config.js
 
 # ========================================
 # ملفات النظام
