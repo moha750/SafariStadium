@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملاعب سفاري - حجز إلكتروني</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>⚽ ملاعب سفاري</h1>
+                <p>احجز ملعبك بسهولة</p>
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link active">الرئيسية</a>
+                <a href="admin.html" class="nav-link">لوحة التحكم</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <section class="hero">
+            <div class="container">
+                <h2 class="hero-title">احجز ملعبك الآن</h2>
+                <p class="hero-subtitle">اختر الملعب المناسب واحجز موعدك بكل سهولة</p>
+            </div>
+        </section>
+
+        <section class="fields-section">
+            <div class="container">
+                <div class="fields-grid">
+                    <!-- ملعب سفاري 1 -->
+                    <div class="field-card" data-field="Safari 1">
+                        <div class="field-image">
+                            <div class="field-badge">متاح</div>
+                            <div class="field-icon">⚽</div>
+                        </div>
+                        <div class="field-content">
+                            <h3 class="field-name">ملعب سفاري 1</h3>
+                            <p class="field-description">ملعب عشب صناعي بمواصفات عالمية</p>
+                            <ul class="field-features">
+                                <li>✓ إضاءة ليلية</li>
+                                <li>✓ غرف تبديل ملابس</li>
+                                <li>✓ مواقف سيارات</li>
+                            </ul>
+                            <button class="btn btn-primary book-btn" data-field="Safari 1">
+                                احجز الآن
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ملعب سفاري 2 -->
+                    <div class="field-card" data-field="Safari 2">
+                        <div class="field-image">
+                            <div class="field-badge">متاح</div>
+                            <div class="field-icon">⚽</div>
+                        </div>
+                        <div class="field-content">
+                            <h3 class="field-name">ملعب سفاري 2</h3>
+                            <p class="field-description">ملعب عشب صناعي بمواصفات عالمية</p>
+                            <ul class="field-features">
+                                <li>✓ إضاءة ليلية</li>
+                                <li>✓ غرف تبديل ملابس</li>
+                                <li>✓ مواقف سيارات</li>
+                            </ul>
+                            <button class="btn btn-primary book-btn" data-field="Safari 2">
+                                احجز الآن
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- نموذج الحجز (Modal) -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">حجز موعد</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="bookingForm">
+                    <input type="hidden" id="fieldName" name="fieldName">
+                    
+                    <div class="form-group">
+                        <label for="customerName" class="form-label">الاسم الكامل *</label>
+                        <input type="text" id="customerName" name="customerName" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" class="form-label">رقم الجوال *</label>
+                        <input type="tel" id="phone" name="phone" class="form-input" 
+                               placeholder="+966XXXXXXXXX" required>
+                        <small class="form-hint">مثال: +966501234567</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bookingDate" class="form-label">تاريخ الحجز *</label>
+                        <input type="date" id="bookingDate" name="bookingDate" class="form-input" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startTime" class="form-label">وقت البداية *</label>
+                            <input type="time" id="startTime" name="startTime" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endTime" class="form-label">وقت النهاية *</label>
+                            <input type="time" id="endTime" name="endTime" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">تأكيد الحجز</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسالة النجاح -->
+    <div id="successMessage" class="toast toast-success">
+        <span class="toast-icon">✓</span>
+        <span class="toast-text">تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً</span>
+    </div>
+
+    <!-- رسالة الخطأ -->
+    <div id="errorMessage" class="toast toast-error">
+        <span class="toast-icon">✗</span>
+        <span class="toast-text">حدث خطأ، يرجى المحاولة مرة أخرى</span>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 ملاعب سفاري - جميع الحقوق محفوظة</p>
+        </div>
+    </footer>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
