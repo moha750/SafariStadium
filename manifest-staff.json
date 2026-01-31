@@ -1,8 +1,9 @@
 {
   "name": "الحجوزات - ملاعب سفاري",
   "short_name": "الحجوزات",
-  "description": "عرض حجوزات ملاعب سفاري المؤكدة",
-  "start_url": "/staff.html",
+  "description": "عرض الحجوزات المؤكدة لملاعب سفاري",
+  "start_url": "./staff.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#10b981",
