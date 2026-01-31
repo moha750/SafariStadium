@@ -100,11 +100,14 @@ class NotificationManager {
      */
     async saveSubscription(subscription) {
         try {
+            // تحويل الاشتراك إلى JSON للحصول على keys
+            const subJSON = subscription.toJSON();
+            
             // تحويل keys إلى p256dh و auth منفصلين
             const subscriptionData = {
-                endpoint: subscription.endpoint,
-                p256dh: subscription.keys.p256dh,
-                auth: subscription.keys.auth,
+                endpoint: subJSON.endpoint,
+                p256dh: subJSON.keys.p256dh,
+                auth: subJSON.keys.auth,
                 user_type: this.getUserType(),
                 created_at: new Date().toISOString()
             };

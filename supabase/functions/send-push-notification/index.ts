@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import webpush from 'npm:web-push@3.6.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,7 +22,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log('📨 Received notification request')
     const { title, body, icon, data, userType } = await req.json() as NotificationPayload
+    console.log(`📋 Title: ${title}, UserType: ${userType}`)
 
     // إنشاء عميل Supabase
     const supabaseClient = createClient(
@@ -37,21 +40,44 @@ serve(async (req) => {
     }
 
     const { data: subscriptions, error } = await query
+    console.log(`🔍 Found ${subscriptions?.length || 0} subscriptions`)
 
     if (error) {
+      console.error('❌ Database error:', error)
       throw error
     }
 
     if (!subscriptions || subscriptions.length === 0) {
+      console.log('⚠️ No subscriptions found')
       return new Response(
-        JSON.stringify({ message: 'No subscriptions found' }),
+        JSON.stringify({ message: 'No subscriptions found', userType }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       )
     }
 
+    // إعداد VAPID
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error('❌ VAPID keys not configured')
+      return new Response(
+        JSON.stringify({ error: 'VAPID keys not configured' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
+
+    webpush.setVapidDetails(
+      'mailto:admin@safaristadium.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    )
+
     // إرسال الإشعارات لكل اشتراك
     const notifications = subscriptions.map(async (sub) => {
       try {
+        console.log(`📤 Sending to: ${sub.endpoint.substring(0, 50)}...`)
+        
         const pushSubscription = {
           endpoint: sub.endpoint,
           keys: {
@@ -67,42 +93,29 @@ serve(async (req) => {
           data: data || {}
         })
 
-        // استخدام Web Push API
-        // ملاحظة: يجب إعداد VAPID keys في متغيرات البيئة
-        const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
-        const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-
-        if (!vapidPublicKey || !vapidPrivateKey) {
-          console.error('VAPID keys not configured')
-          return { success: false, error: 'VAPID keys not configured' }
-        }
-
-        // هنا يمكنك استخدام مكتبة web-push
-        // لكن في Deno Edge Functions، نستخدم طريقة مختلفة
+        await webpush.sendNotification(pushSubscription, payload)
+        console.log(`✅ Sent successfully to ${sub.user_type}`)
         
-        // للتبسيط، نستخدم fetch مباشرة
-        const response = await fetch(pushSubscription.endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'TTL': '86400'
-          },
-          body: payload
-        })
-
         return { 
-          success: response.ok, 
-          status: response.status,
-          endpoint: sub.endpoint 
+          success: true,
+          endpoint: sub.endpoint.substring(0, 50) + '...',
+          userType: sub.user_type
         }
-      } catch (error) {
-        console.error('Error sending notification:', error)
-        return { success: false, error: error.message, endpoint: sub.endpoint }
+      } catch (error: any) {
+        console.error(`❌ Error sending to ${sub.user_type}:`, error.message)
+        return { 
+          success: false, 
+          error: error.message, 
+          endpoint: sub.endpoint.substring(0, 50) + '...',
+          userType: sub.user_type
+        }
       }
     })
 
     const results = await Promise.all(notifications)
     const successCount = results.filter(r => r.success).length
+
+    console.log(`✅ Sent ${successCount}/${results.length} notifications`)
 
     return new Response(
       JSON.stringify({ 
@@ -112,7 +125,8 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
-  } catch (error) {
+  } catch (error: any) {
+    console.error('❌ Function error:', error.message)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
