@@ -287,6 +287,45 @@ class BookingApp {
     }
 
     /**
+     * التحقق من صحة بيانات النموذج
+     */
+    validateForm() {
+        const data = {
+            fieldName: document.getElementById('fieldName').value,
+            customerName: document.getElementById('customerName').value,
+            phone: document.getElementById('phone').value,
+            bookingDate: document.getElementById('bookingDate').value
+        };
+
+        // التحقق من الاسم
+        if (!data.customerName || data.customerName.trim().length < 3) {
+            return { valid: false, message: 'يرجى إدخال اسم صحيح (3 أحرف على الأقل)' };
+        }
+
+        // التحقق من رقم الهاتف
+        const phoneRegex = /^05\d{8}$/;
+        if (!phoneRegex.test(data.phone)) {
+            return { valid: false, message: 'يرجى إدخال رقم جوال صحيح يبدأ بـ 05 ويتكون من 10 أرقام' };
+        }
+
+        // التحقق من التاريخ
+        const selectedDate = new Date(data.bookingDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            return { valid: false, message: 'لا يمكن الحجز في تاريخ سابق' };
+        }
+
+        // التحقق من اختيار الفترة الزمنية
+        if (!this.selectedSlot) {
+            return { valid: false, message: 'يرجى اختيار فترة زمنية' };
+        }
+
+        return { valid: true, data };
+    }
+
+    /**
      * إرسال إشعار Push للمدير عند طلب حجز جديد
      */
     async notifyAdminNewBooking(bookingData) {

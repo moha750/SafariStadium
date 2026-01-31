@@ -100,34 +100,41 @@ class NotificationManager {
      */
     async saveSubscription(subscription) {
         try {
-            const keys = subscription.toJSON().keys;
             const subscriptionData = {
                 endpoint: subscription.endpoint,
-                p256dh: keys.p256dh,
-                auth: keys.auth,
-                user_type: this.getUserType()
+                keys: subscription.keys,
+                user_type: this.getUserType(),
+                created_at: new Date().toISOString()
             };
 
-            // حفظ في Supabase
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions`, {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(subscriptionData)
-            });
+            // استخدام upsert لتجنب خطأ duplicate key
+            const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/push_subscriptions`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates,return=representation'
+                    },
+                    body: JSON.stringify(subscriptionData)
+                }
+            );
 
-            if (response.ok) {
-                console.log('تم حفظ الاشتراك في Supabase بنجاح');
-                // حفظ في localStorage كنسخة احتياطية
-                localStorage.setItem('push_subscription', JSON.stringify(subscriptionData));
-            } else {
+            if (!response.ok) {
                 const error = await response.json();
-                console.error('خطأ في حفظ الاشتراك:', error);
+                // تجاهل خطأ duplicate key لأن الاشتراك موجود بالفعل
+                if (error.code === '23505') {
+                    console.log('الاشتراك موجود بالفعل - تم التجاهل');
+                    return;
+                }
+                throw error;
             }
+
+            console.log('تم حفظ الاشتراك في Supabase');
+            // حفظ في localStorage كنسخة احتياطية
+            localStorage.setItem('push_subscription', JSON.stringify(subscriptionData));
         } catch (error) {
             console.error('خطأ في حفظ الاشتراك:', error);
         }
