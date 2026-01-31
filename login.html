@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - ملاعب سفاري</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">⚽</div>
+                <h1>ملاعب سفاري</h1>
+                <p>لوحة التحكم الإدارية</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">اسم المستخدم</label>
+                    <input type="text" id="username" name="username" class="form-input" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">الرقم السري</label>
+                    <input type="password" id="password" name="password" class="form-input" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    تسجيل الدخول
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <a href="index.html" class="back-link">← العودة للصفحة الرئيسية</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/login.js"></script>
+</body>
+</html>

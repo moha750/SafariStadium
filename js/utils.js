@@ -21,14 +21,13 @@ export function showToast(message, type = 'success') {
 }
 
 /**
- * التحقق من صحة رقم الهاتف بصيغة E.164
+ * التحقق من صحة رقم الهاتف السعودي
  * @param {string} phone - رقم الهاتف
  * @returns {boolean} - true إذا كان صحيحاً
  */
 export function validatePhone(phone) {
-    // صيغة E.164: +[country code][number]
-    // مثال: +966501234567
-    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    // صيغة الأرقام السعودية: 05XXXXXXXX (10 أرقام تبدأ بـ 05)
+    const phoneRegex = /^05\d{8}$/;
     return phoneRegex.test(phone);
 }
 
@@ -118,5 +117,5 @@ export function calculateDuration(startTime, endTime) {
  * @returns {string} - رقم الهاتف المنظف
  */
 export function cleanPhone(phone) {
-    return phone.replace(/[^\d+]/g, '');
+    return phone.replace(/[^\d]/g, '');
 }

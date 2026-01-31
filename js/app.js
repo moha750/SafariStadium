@@ -11,6 +11,8 @@ class BookingApp {
         this.modal = document.getElementById('bookingModal');
         this.form = document.getElementById('bookingForm');
         this.selectedField = null;
+        this.selectedSlot = null;
+        this.timeSlots = this.generateTimeSlots();
         
         this.init();
     }
@@ -21,6 +23,45 @@ class BookingApp {
     init() {
         this.setupEventListeners();
         this.setMinDate();
+    }
+
+    /**
+     * توليد الفترات الزمنية المتاحة
+     * من 3:30 عصراً إلى 5:00 فجراً، كل فترة ساعة ونصف
+     */
+    generateTimeSlots() {
+        const slots = [];
+        const startHour = 15; // 3:30 PM
+        const startMinute = 30;
+        
+        // الفترات من 3:30 عصراً حتى 11:30 مساءً
+        for (let hour = startHour; hour <= 23; hour++) {
+            const minute = (hour === startHour) ? startMinute : 0;
+            if (hour === 23 && minute > 30) break;
+            
+            const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+            const endHour = minute === 30 ? hour + 2 : hour + 1;
+            const endMinute = minute === 30 ? 0 : 30;
+            const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+            
+            slots.push({ startTime, endTime });
+        }
+        
+        // الفترات من 12:00 منتصف الليل حتى 5:00 فجراً
+        for (let hour = 0; hour <= 3; hour++) {
+            for (let minute = 0; minute <= 30; minute += 30) {
+                if (hour === 3 && minute > 30) break;
+                
+                const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                const endHour = minute === 30 ? hour + 2 : hour + 1;
+                const endMinute = minute === 30 ? 0 : 30;
+                const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+                
+                slots.push({ startTime, endTime });
+            }
+        }
+        
+        return slots;
     }
 
     /**
@@ -62,6 +103,12 @@ class BookingApp {
         phoneInput.addEventListener('input', (e) => {
             this.formatPhoneInput(e.target);
         });
+
+        // تحديث الفترات عند تغيير التاريخ
+        const dateInput = document.getElementById('bookingDate');
+        dateInput.addEventListener('change', () => {
+            this.loadTimeSlots();
+        });
     }
 
     /**
@@ -80,15 +127,20 @@ class BookingApp {
     openBookingModal(fieldName) {
         this.selectedField = fieldName;
         document.getElementById('fieldName').value = fieldName;
-        this.modal.classList.add('active');
-        
-        // تحديث عنوان النافذة
-        const modalTitle = document.querySelector('.modal-title');
-        modalTitle.textContent = `حجز ${fieldName}`;
+        document.getElementById('selectedTimeSlot').value = '';
         
         // إعادة تعيين النموذج
         this.form.reset();
-        this.setMinDate();
+        document.getElementById('fieldName').value = fieldName;
+        
+        // مسح الفترات الزمنية
+        document.getElementById('timeSlotsContainer').innerHTML = '<p class="loading-slots">اختر التاريخ أولاً</p>';
+        
+        // منع التمرير
+        document.body.classList.add('modal-open');
+        
+        // عرض النافذة
+        this.modal.classList.add('active');
     }
 
     /**
@@ -98,6 +150,116 @@ class BookingApp {
         this.modal.classList.remove('active');
         this.form.reset();
         this.selectedField = null;
+        this.selectedSlot = null;
+        
+        // السماح بالتمرير مرة أخرى
+        document.body.classList.remove('modal-open');
+    }
+
+    /**
+     * تحميل وعرض الفترات الزمنية
+     */
+    async loadTimeSlots() {
+        const dateInput = document.getElementById('bookingDate');
+        const selectedDate = dateInput.value;
+        
+        if (!selectedDate) {
+            return;
+        }
+        
+        const container = document.getElementById('timeSlotsContainer');
+        container.innerHTML = '<p class="loading-slots">جاري تحميل الفترات المتاحة...</p>';
+        
+        try {
+            // جلب الحجوزات الموجودة لهذا التاريخ والملعب
+            const bookedSlots = await this.getBookedSlots(selectedDate);
+            
+            // عرض الفترات
+            container.innerHTML = '';
+            this.timeSlots.forEach(slot => {
+                const isBooked = bookedSlots.some(booked => {
+                    // إزالة الثواني من الوقت القادم من قاعدة البيانات
+                    const dbStartTime = booked.start_time.substring(0, 5); // "16:00:00" -> "16:00"
+                    const dbEndTime = booked.end_time.substring(0, 5);
+                    const match = dbStartTime === slot.startTime && dbEndTime === slot.endTime;
+                    if (match) {
+                        console.log('فترة محجوزة:', slot.startTime, '-', slot.endTime);
+                    }
+                    return match;
+                });
+                
+                const slotElement = this.createTimeSlotElement(slot, isBooked);
+                container.appendChild(slotElement);
+            });
+        } catch (error) {
+            console.error('خطأ في تحميل الفترات:', error);
+            container.innerHTML = '<p class="loading-slots">حدث خطأ في تحميل الفترات</p>';
+        }
+    }
+
+    /**
+     * جلب الفترات المحجوزة
+     */
+    async getBookedSlots(date) {
+        try {
+            const result = await supabaseClient.getBookingsByDate(this.selectedField, date);
+            console.log('الحجوزات المحجوزة:', result.data);
+            return result.success ? result.data : [];
+        } catch (error) {
+            console.error('خطأ في جلب الحجوزات:', error);
+            return [];
+        }
+    }
+
+    /**
+     * إنشاء عنصر فترة زمنية
+     */
+    createTimeSlotElement(slot, isBooked) {
+        const div = document.createElement('div');
+        div.className = `time-slot ${isBooked ? 'disabled' : ''}`;
+        div.dataset.startTime = slot.startTime;
+        div.dataset.endTime = slot.endTime;
+        
+        const timeText = `${this.formatTimeDisplay(slot.startTime)} - ${this.formatTimeDisplay(slot.endTime)}`;
+        
+        div.innerHTML = `
+            <div class="time-slot-time">${timeText}</div>
+            <div class="time-slot-duration">${isBooked ? 'محجوز' : 'متاح'}</div>
+        `;
+        
+        if (!isBooked) {
+            div.addEventListener('click', () => this.selectTimeSlot(div, slot));
+        }
+        
+        return div;
+    }
+
+    /**
+     * تنسيق عرض الوقت
+     */
+    formatTimeDisplay(time) {
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const period = hour >= 12 ? 'م' : 'ص';
+        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        return `${displayHour}:${minutes} ${period}`;
+    }
+
+    /**
+     * اختيار فترة زمنية
+     */
+    selectTimeSlot(element, slot) {
+        // إزالة التحديد من الفترات الأخرى
+        document.querySelectorAll('.time-slot').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // تحديد الفترة الحالية
+        element.classList.add('selected');
+        this.selectedSlot = slot;
+        
+        // تحديث الحقل المخفي
+        document.getElementById('selectedTimeSlot').value = JSON.stringify(slot);
     }
 
     /**
@@ -105,11 +267,12 @@ class BookingApp {
      * @param {HTMLInputElement} input - حقل الإدخال
      */
     formatPhoneInput(input) {
-        let value = input.value.replace(/[^\d+]/g, '');
+        // إزالة أي شيء غير الأرقام
+        let value = input.value.replace(/[^\d]/g, '');
         
-        // إضافة + تلقائياً إذا لم تكن موجودة
-        if (value && !value.startsWith('+')) {
-            value = '+' + value;
+        // التأكد من أن الرقم لا يتجاوز 10 أرقام
+        if (value.length > 10) {
+            value = value.substring(0, 10);
         }
         
         input.value = value;
@@ -130,7 +293,7 @@ class BookingApp {
 
         // التحقق من رقم الهاتف
         if (!validatePhone(data.phone)) {
-            return { valid: false, message: 'يرجى إدخال رقم جوال صحيح بصيغة دولية (مثال: +966501234567)' };
+            return { valid: false, message: 'يرجى إدخال رقم جوال صحيح يبدأ بـ 05 ويتكون من 10 أرقام (مثال: 0501234567)' };
         }
 
         // التحقق من التاريخ
@@ -142,26 +305,9 @@ class BookingApp {
             return { valid: false, message: 'لا يمكن الحجز في تاريخ سابق' };
         }
 
-        // التحقق من الأوقات
-        if (!data.startTime || !data.endTime) {
-            return { valid: false, message: 'يرجى تحديد وقت البداية والنهاية' };
-        }
-
-        if (data.startTime >= data.endTime) {
-            return { valid: false, message: 'وقت النهاية يجب أن يكون بعد وقت البداية' };
-        }
-
-        // التحقق من مدة الحجز (ساعة واحدة على الأقل)
-        const start = new Date(`2000-01-01T${data.startTime}`);
-        const end = new Date(`2000-01-01T${data.endTime}`);
-        const duration = (end - start) / (1000 * 60 * 60); // بالساعات
-
-        if (duration < 1) {
-            return { valid: false, message: 'الحد الأدنى لمدة الحجز ساعة واحدة' };
-        }
-
-        if (duration > 4) {
-            return { valid: false, message: 'الحد الأقصى لمدة الحجز 4 ساعات' };
+        // التحقق من اختيار الفترة الزمنية
+        if (!this.selectedSlot) {
+            return { valid: false, message: 'يرجى اختيار فترة زمنية' };
         }
 
         return { valid: true, data };
@@ -192,8 +338,8 @@ class BookingApp {
             const isAvailable = await supabaseClient.checkAvailability({
                 field_name: formData.fieldName,
                 booking_date: formData.bookingDate,
-                start_time: formData.startTime,
-                end_time: formData.endTime
+                start_time: this.selectedSlot.startTime,
+                end_time: this.selectedSlot.endTime
             });
 
             if (!isAvailable) {
@@ -209,8 +355,8 @@ class BookingApp {
                 customer_name: formData.customerName.trim(),
                 phone: formData.phone,
                 booking_date: formData.bookingDate,
-                start_time: formData.startTime,
-                end_time: formData.endTime
+                start_time: this.selectedSlot.startTime,
+                end_time: this.selectedSlot.endTime
             });
 
             if (result.success) {

@@ -114,6 +114,34 @@ class SupabaseClient {
     }
 
     /**
+     * جلب الحجوزات حسب التاريخ والملعب
+     * @param {string} fieldName - اسم الملعب
+     * @param {string} date - التاريخ
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async getBookingsByDate(fieldName, date) {
+        try {
+            const url = `${this.supabaseUrl}/rest/v1/bookings?field_name=eq.${encodeURIComponent(fieldName)}&booking_date=eq.${date}&status=eq.approved`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: this.headers
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في جلب الحجوزات');
+            }
+
+            const data = await response.json();
+            console.log('الحجوزات المؤكدة للتاريخ', date, ':', data);
+            return { success: true, data };
+        } catch (error) {
+            console.error('خطأ في جلب الحجوزات:', error);
+            return { success: false, error: error.message, data: [] };
+        }
+    }
+
+    /**
      * التحقق من توفر الملعب في وقت محدد
      * @param {Object} params - معاملات البحث
      * @returns {Promise<boolean>} - true إذا كان متاحاً

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <title>عرض الحجوزات - ملاعب سفاري</title>
+    <link rel="manifest" href="manifest-staff.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/staff.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>⚽ ملاعب سفاري</h1>
+                <p>عرض الحجوزات المؤكدة</p>
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">الرئيسية</a>
+                <a href="staff.html" class="nav-link active">الحجوزات</a>
+                <button id="enableNotificationsBtn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem; margin-left: 0.5rem;">
+                    🔔 تفعيل الإشعارات
+                </button>
+                <button id="installAppBtn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem; margin-left: 0.5rem;">
+                    📱 تثبيت التطبيق
+                </button>
+                <button id="refreshBtn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                    <span class="refresh-icon">↻</span> تحديث
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main staff-main">
+        <div class="container">
+            <div class="staff-header">
+                <h2>الحجوزات المؤكدة</h2>
+                <div class="filter-controls">
+                    <select id="fieldFilter" class="filter-select">
+                        <option value="all">جميع الملاعب</option>
+                        <option value="Safari 1">ملعب سفاري 1</option>
+                        <option value="Safari 2">ملعب سفاري 2</option>
+                    </select>
+                    <select id="dateFilter" class="filter-select">
+                        <option value="all">جميع التواريخ</option>
+                        <option value="today">اليوم</option>
+                        <option value="tomorrow">غداً</option>
+                        <option value="week">هذا الأسبوع</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalBookings">0</div>
+                        <div class="stat-label">إجمالي الحجوزات</div>
+                    </div>
+                </div>
+                <div class="stat-box stat-active">
+                    <div class="stat-icon">🎮</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="activeBookings">0</div>
+                        <div class="stat-label">جاري الآن</div>
+                    </div>
+                </div>
+                <div class="stat-box stat-upcoming">
+                    <div class="stat-icon">⏰</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="upcomingBookings">0</div>
+                        <div class="stat-label">قادمة</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bookings-container">
+                <div id="loadingSpinner" class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل الحجوزات...</p>
+                </div>
+
+                <div id="bookingsGrid" class="bookings-grid" style="display: none;">
+                </div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-icon">📋</div>
+                    <h3>لا توجد حجوزات مؤكدة</h3>
+                    <p>لم يتم العثور على أي حجوزات مؤكدة</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- نافذة تفاصيل العميل -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content modal-content-customer">
+            <div class="modal-header">
+                <h2 class="modal-title">تفاصيل العميل والحجز</h2>
+                <button class="modal-close" id="closeCustomerModal">&times;</button>
+            </div>
+            <div class="modal-body" id="customerModalBody">
+            </div>
+        </div>
+    </div>
+
+    <!-- رسالة النجاح -->
+    <div id="successMessage" class="toast toast-success">
+        <span class="toast-icon">✓</span>
+        <span class="toast-text"></span>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; <span id="currentYear"></span> ملاعب سفاري - جميع الحقوق محفوظة</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // تسجيل Service Worker للـ PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker مسجل:', reg))
+                .catch(err => console.log('خطأ في تسجيل Service Worker:', err));
+        }
+
+        // حفظ حدث التثبيت
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            window.deferredPrompt = e;
+            console.log('التطبيق جاهز للتثبيت');
+        });
+    </script>
+
+    <script type="module" src="js/staff.js"></script>
+</body>
+</html>

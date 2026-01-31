@@ -1,0 +1,438 @@
+/* ========================================
+   صفحة عرض الحجوزات للموظفين
+   ======================================== */
+
+.staff-main {
+    background-color: var(--bg-light);
+    min-height: calc(100vh - 200px);
+}
+
+/* ========================================
+   رأس الصفحة
+   ======================================== */
+.staff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.staff-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-white);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.refresh-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+#refreshBtn:hover .refresh-icon {
+    transform: rotate(180deg);
+}
+
+/* ========================================
+   صناديق الإحصائيات
+   ======================================== */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-box {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-box .stat-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.stat-box.stat-active .stat-icon {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.stat-box.stat-upcoming .stat-icon {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.stat-box .stat-content {
+    flex: 1;
+}
+
+.stat-box .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-box .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   حاوية الحجوزات
+   ======================================== */
+.bookings-container {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* ========================================
+   شبكة الكاردات
+   ======================================== */
+.bookings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.booking-card-staff {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.booking-card-staff:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+}
+
+.booking-card-staff.active-booking {
+    border-color: var(--warning-color);
+    background: linear-gradient(to bottom, rgba(245, 158, 11, 0.05), var(--bg-white));
+}
+
+.booking-card-staff.active-booking::before {
+    content: '🎮 جاري الآن';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--warning-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 10;
+}
+
+.booking-card-header-staff {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    text-align: center;
+}
+
+.booking-field-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.booking-time-display {
+    font-size: 1rem;
+    opacity: 0.95;
+}
+
+.booking-card-body-staff {
+    padding: 1.25rem;
+}
+
+.customer-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.customer-info-row:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.customer-info-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-light);
+    border-radius: var(--radius-md);
+}
+
+.customer-info-content {
+    flex: 1;
+}
+
+.customer-info-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.customer-info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.customer-phone-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.copy-phone-btn-staff {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.copy-phone-btn-staff:hover {
+    background-color: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.booking-card-footer-staff {
+    padding: 1rem 1.25rem;
+    background-color: var(--bg-light);
+    text-align: center;
+}
+
+.btn-view-customer {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-view-customer:hover {
+    background-color: #4f46e5;
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   نافذة تفاصيل العميل
+   ======================================== */
+.modal-content-customer {
+    max-width: 600px;
+}
+
+.customer-details-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.customer-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-light);
+    border-radius: var(--radius-md);
+}
+
+.customer-detail-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-white);
+    border-radius: var(--radius-md);
+}
+
+.customer-detail-content {
+    flex: 1;
+}
+
+.customer-detail-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.customer-detail-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.customer-phone-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.btn-call-customer {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-call-customer:hover {
+    background-color: var(--primary-dark);
+}
+
+/* ========================================
+   مؤشر التحميل
+   ======================================== */
+.loading-spinner {
+    padding: 3rem;
+    text-align: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner p {
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   حالة فارغة
+   ======================================== */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   الاستجابة للشاشات الصغيرة
+   ======================================== */
+@media (max-width: 768px) {
+    .staff-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-controls {
+        width: 100%;
+    }
+
+    .filter-select {
+        flex: 1;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .bookings-grid {
+        grid-template-columns: 1fr;
+    }
+}

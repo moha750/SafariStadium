@@ -94,8 +94,8 @@
                     <div class="form-group">
                         <label for="phone" class="form-label">رقم الجوال *</label>
                         <input type="tel" id="phone" name="phone" class="form-input" 
-                               placeholder="+966XXXXXXXXX" required>
-                        <small class="form-hint">مثال: +966501234567</small>
+                               placeholder="05XXXXXXXX" pattern="05[0-9]{8}" maxlength="10" required>
+                        <small class="form-hint">مثال: 0501234567 (يجب أن يبدأ بـ 05 ويتكون من 10 أرقام)</small>
                     </div>
 
                     <div class="form-group">
@@ -103,16 +103,12 @@
                         <input type="date" id="bookingDate" name="bookingDate" class="form-input" required>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="startTime" class="form-label">وقت البداية *</label>
-                            <input type="time" id="startTime" name="startTime" class="form-input" required>
+                    <div class="form-group">
+                        <label class="form-label">اختر الفترة الزمنية *</label>
+                        <div id="timeSlotsContainer" class="time-slots-container">
+                            <p class="loading-slots">جاري تحميل الفترات المتاحة...</p>
                         </div>
-
-                        <div class="form-group">
-                            <label for="endTime" class="form-label">وقت النهاية *</label>
-                            <input type="time" id="endTime" name="endTime" class="form-input" required>
-                        </div>
+                        <input type="hidden" id="selectedTimeSlot" name="selectedTimeSlot" required>
                     </div>
 
                     <div class="form-actions">
@@ -138,9 +134,13 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 ملاعب سفاري - جميع الحقوق محفوظة</p>
+            <p>&copy; <span id="currentYear"></span> ملاعب سفاري - جميع الحقوق محفوظة</p>
         </div>
     </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
 
     <script type="module" src="js/app.js"></script>
 </body>

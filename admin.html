@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
     <title>لوحة التحكم - ملاعب سفاري</title>
+    <link rel="manifest" href="manifest-admin.json">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
@@ -17,6 +19,7 @@
             <nav class="nav">
                 <a href="index.html" class="nav-link">الرئيسية</a>
                 <a href="admin.html" class="nav-link active">لوحة التحكم</a>
+                <a href="staff.html" class="nav-link">صفحة الحجوزات</a>
             </nav>
         </div>
     </header>
@@ -26,19 +29,47 @@
             <div class="admin-header">
                 <h2>إدارة الحجوزات</h2>
                 <div class="filter-controls">
-                    <select id="statusFilter" class="filter-select">
-                        <option value="all">جميع الحالات</option>
-                        <option value="pending">قيد الانتظار</option>
-                        <option value="approved">مؤكدة</option>
-                        <option value="rejected">مرفوضة</option>
-                    </select>
-                    <select id="fieldFilter" class="filter-select">
-                        <option value="all">جميع الملاعب</option>
-                        <option value="Safari 1">ملعب سفاري 1</option>
-                        <option value="Safari 2">ملعب سفاري 2</option>
-                    </select>
-                    <button id="refreshBtn" class="btn btn-secondary">
-                        <span class="refresh-icon">↻</span> تحديث
+                    <button id="enableNotificationsBtn" class="btn btn-secondary" style="margin-left: 0.5rem;">
+                        🔔 تفعيل الإشعارات
+                    </button>
+                    <button id="copyStaffLinkBtn" class="btn btn-secondary" style="margin-left: 0.5rem;">
+                        � نسخ رابط الحجوزات
+                    </button>
+                    <button id="openStaffPageBtn" class="btn btn-secondary" style="margin-left: 0.5rem;">
+                        � فتح صفحة الحجوزات
+                    </button>
+                    <button id="installAppBtn" class="btn btn-secondary" style="margin-left: 0.5rem;">
+                        📱 تثبيت التطبيق
+                    </button>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="all">
+                        <span class="tab-icon">📊</span>
+                        <span class="tab-label">الكل</span>
+                        <span class="tab-count" id="allCount">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="pending">
+                        <span class="tab-icon">⏳</span>
+                        <span class="tab-label">قيد الانتظار</span>
+                        <span class="tab-count" id="pendingTabCount">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="approved">
+                        <span class="tab-icon">✓</span>
+                        <span class="tab-label">المؤكد</span>
+                        <span class="tab-count" id="approvedTabCount">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="rejected">
+                        <span class="tab-icon">✗</span>
+                        <span class="tab-label">المرفوض</span>
+                        <span class="tab-count" id="rejectedTabCount">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="active">
+                        <span class="tab-icon">🎮</span>
+                        <span class="tab-label">الجاري حجزهم</span>
+                        <span class="tab-count" id="activeTabCount">0</span>
                     </button>
                 </div>
             </div>
@@ -80,23 +111,18 @@
                     <p>جاري تحميل الحجوزات...</p>
                 </div>
 
-                <div id="bookingsTable" class="bookings-table" style="display: none;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>الملعب</th>
-                                <th>اسم العميل</th>
-                                <th>رقم الجوال</th>
-                                <th>التاريخ</th>
-                                <th>الوقت</th>
-                                <th>الحالة</th>
-                                <th>تاريخ الطلب</th>
-                                <th>الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bookingsTableBody">
-                        </tbody>
-                    </table>
+                <div class="bookings-filter-bar" style="display: none; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+                    <select id="fieldFilter" class="filter-select">
+                        <option value="all">جميع الملاعب</option>
+                        <option value="Safari 1">ملعب سفاري 1</option>
+                        <option value="Safari 2">ملعب سفاري 2</option>
+                    </select>
+                    <button id="refreshBtn" class="btn btn-secondary">
+                        <span class="refresh-icon">↻</span> تحديث
+                    </button>
+                </div>
+
+                <div id="bookingsGrid" class="bookings-grid" style="display: none;">
                 </div>
 
                 <div id="emptyState" class="empty-state" style="display: none;">
@@ -107,6 +133,18 @@
             </div>
         </div>
     </main>
+
+    <!-- نافذة تفاصيل الحجز -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content modal-content-details">
+            <div class="modal-header">
+                <h2 class="modal-title">تفاصيل الحجز</h2>
+                <button class="modal-close" id="closeDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+            </div>
+        </div>
+    </div>
 
     <!-- رسالة النجاح -->
     <div id="successMessage" class="toast toast-success">
@@ -122,9 +160,29 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 ملاعب سفاري - جميع الحقوق محفوظة</p>
+            <p>&copy; <span id="currentYear"></span> ملاعب سفاري - جميع الحقوق محفوظة</p>
         </div>
     </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // تسجيل Service Worker للـ PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker مسجل:', reg))
+                .catch(err => console.log('خطأ في تسجيل Service Worker:', err));
+        }
+
+        // حفظ حدث التثبيت
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            window.deferredPrompt = e;
+            console.log('التطبيق جاهز للتثبيت');
+        });
+    </script>
 
     <script type="module" src="js/admin.js"></script>
 </body>

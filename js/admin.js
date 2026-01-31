@@ -5,6 +5,8 @@
 
 import supabaseClient from './supabase-client.js';
 import { showToast, formatDate, formatTime, formatDateTime } from './utils.js';
+import notificationManager from './notifications.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 class AdminDashboard {
     constructor() {
@@ -13,6 +15,7 @@ class AdminDashboard {
             status: 'all',
             field_name: 'all'
         };
+        this.currentTab = 'all';
         
         this.init();
     }
@@ -21,33 +24,187 @@ class AdminDashboard {
      * تهيئة لوحة التحكم
      */
     init() {
+        this.checkAuth();
         this.setupEventListeners();
         this.loadBookings();
+    }
+
+    /**
+     * التحقق من تسجيل الدخول
+     */
+    checkAuth() {
+        const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+        if (isLoggedIn !== 'true') {
+            window.location.href = 'login.html';
+            return;
+        }
     }
 
     /**
      * إعداد مستمعي الأحداث
      */
     setupEventListeners() {
-        // فلتر الحالة
-        const statusFilter = document.getElementById('statusFilter');
-        statusFilter.addEventListener('change', (e) => {
-            this.filters.status = e.target.value;
-            this.filterBookings();
-        });
-
         // فلتر الملعب
         const fieldFilter = document.getElementById('fieldFilter');
-        fieldFilter.addEventListener('change', (e) => {
-            this.filters.field_name = e.target.value;
-            this.filterBookings();
-        });
+        if (fieldFilter) {
+            fieldFilter.addEventListener('change', (e) => {
+                this.filters.field_name = e.target.value;
+                this.filterBookings();
+            });
+        }
 
         // زر التحديث
         const refreshBtn = document.getElementById('refreshBtn');
-        refreshBtn.addEventListener('click', () => {
-            this.loadBookings();
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadBookings();
+            });
+        }
+
+        // زر تسجيل الخروج
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.handleLogout();
+            });
+        }
+
+        // زر نسخ رابط staff
+        const copyStaffLinkBtn = document.getElementById('copyStaffLinkBtn');
+        if (copyStaffLinkBtn) {
+            copyStaffLinkBtn.addEventListener('click', () => {
+                this.copyStaffLink();
+            });
+        }
+
+        // زر تفعيل الإشعارات
+        const enableNotificationsBtn = document.getElementById('enableNotificationsBtn');
+        if (enableNotificationsBtn) {
+            enableNotificationsBtn.addEventListener('click', async () => {
+                await this.enableNotifications();
+            });
+        }
+
+        // زر فتح صفحة الحجوزات
+        const openStaffPageBtn = document.getElementById('openStaffPageBtn');
+        if (openStaffPageBtn) {
+            openStaffPageBtn.addEventListener('click', () => {
+                window.open('staff.html', '_blank');
+            });
+        }
+
+        // زر تثبيت التطبيق
+        const installAppBtn = document.getElementById('installAppBtn');
+        if (installAppBtn) {
+            installAppBtn.addEventListener('click', () => {
+                this.installApp();
+            });
+        }
+
+        // التبويبات
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = e.currentTarget.dataset.tab;
+                this.switchTab(tab);
+            });
         });
+    }
+
+    /**
+     * معالجة تسجيل الخروج
+     */
+    handleLogout() {
+        sessionStorage.removeItem('isLoggedIn');
+        window.location.href = 'login.html';
+    }
+
+    /**
+     * نسخ رابط صفحة staff
+     */
+    async copyStaffLink() {
+        try {
+            const staffUrl = window.location.origin + window.location.pathname.replace('admin.html', 'staff.html');
+            await navigator.clipboard.writeText(staffUrl);
+            showToast('تم نسخ رابط صفحة الحجوزات بنجاح', 'success');
+        } catch (error) {
+            console.error('خطأ في النسخ:', error);
+            showToast('فشل في نسخ الرابط', 'error');
+        }
+    }
+
+    /**
+     * تفعيل الإشعارات
+     */
+    async enableNotifications() {
+        const hasPermission = await notificationManager.requestPermission();
+        
+        if (hasPermission) {
+            await notificationManager.subscribe();
+            showToast('تم تفعيل الإشعارات بنجاح! ستصلك إشعارات عند وجود حجوزات جديدة', 'success');
+            
+            // تحديث نص الزر
+            const btn = document.getElementById('enableNotificationsBtn');
+            if (btn) {
+                btn.innerHTML = '🔔 الإشعارات مفعلة';
+                btn.disabled = true;
+            }
+        } else {
+            showToast('يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
+        }
+    }
+
+    /**
+     * تثبيت التطبيق كـ PWA
+     */
+    installApp() {
+        // التحقق من وجود حدث التثبيت
+        if (window.deferredPrompt) {
+            window.deferredPrompt.prompt();
+            window.deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    showToast('تم تثبيت التطبيق بنجاح!', 'success');
+                }
+                window.deferredPrompt = null;
+            });
+        } else {
+            showToast('التطبيق مثبت بالفعل أو غير متاح للتثبيت', 'error');
+        }
+    }
+
+    /**
+     * إرسال إشعار Push عبر Supabase Edge Function
+     */
+    async sendPushNotification(bookingData, userType = 'staff') {
+        try {
+            const response = await fetch(
+                `${SUPABASE_URL}/functions/v1/send-push-notification`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: 'حجز جديد! 📋',
+                        body: `حجز من ${bookingData.customer_name} للملعب ${bookingData.field_name}`,
+                        icon: '/icon-192.png',
+                        userType: userType,
+                        data: {
+                            bookingId: bookingData.id,
+                            url: '/staff.html'
+                        }
+                    })
+                }
+            );
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('تم إرسال الإشعارات:', result);
+            }
+        } catch (error) {
+            console.error('خطأ في إرسال الإشعارات:', error);
+        }
     }
 
     /**
@@ -75,14 +232,36 @@ class AdminDashboard {
     }
 
     /**
+     * التبديل بين التبويبات
+     */
+    switchTab(tab) {
+        this.currentTab = tab;
+        
+        // تحديث أزرار التبويبات
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        
+        // تطبيق التصفية
+        this.filterBookings();
+    }
+
+    /**
      * تصفية الحجوزات
      */
     filterBookings() {
         let filtered = [...this.bookings];
 
-        // تصفية حسب الحالة
-        if (this.filters.status !== 'all') {
-            filtered = filtered.filter(b => b.status === this.filters.status);
+        // تصفية حسب التبويب
+        if (this.currentTab === 'pending') {
+            filtered = filtered.filter(b => b.status === 'pending');
+        } else if (this.currentTab === 'approved') {
+            filtered = filtered.filter(b => b.status === 'approved' && !this.isActiveBooking(b));
+        } else if (this.currentTab === 'rejected') {
+            filtered = filtered.filter(b => b.status === 'rejected');
+        } else if (this.currentTab === 'active') {
+            filtered = filtered.filter(b => b.status === 'approved' && this.isActiveBooking(b));
         }
 
         // تصفية حسب الملعب
@@ -94,18 +273,53 @@ class AdminDashboard {
     }
 
     /**
+     * التحقق من أن الحجز جاري (في وقت اللعب الحالي)
+     */
+    isActiveBooking(booking) {
+        if (booking.status !== 'approved') return false;
+        
+        const now = new Date();
+        const bookingDate = new Date(booking.booking_date);
+        
+        // التحقق من أن التاريخ هو اليوم
+        if (bookingDate.toDateString() !== now.toDateString()) {
+            return false;
+        }
+        
+        // التحقق من أن الوقت الحالي بين وقت البداية والنهاية
+        const [startHour, startMinute] = booking.start_time.split(':').map(Number);
+        const [endHour, endMinute] = booking.end_time.split(':').map(Number);
+        
+        const startTime = new Date(now);
+        startTime.setHours(startHour, startMinute, 0, 0);
+        
+        const endTime = new Date(now);
+        endTime.setHours(endHour, endMinute, 0, 0);
+        
+        return now >= startTime && now <= endTime;
+    }
+
+    /**
      * تحديث الإحصائيات
      */
     updateStats() {
         const pending = this.bookings.filter(b => b.status === 'pending').length;
         const approved = this.bookings.filter(b => b.status === 'approved').length;
         const rejected = this.bookings.filter(b => b.status === 'rejected').length;
+        const active = this.bookings.filter(b => this.isActiveBooking(b)).length;
         const total = this.bookings.length;
 
         document.getElementById('pendingCount').textContent = pending;
         document.getElementById('approvedCount').textContent = approved;
         document.getElementById('rejectedCount').textContent = rejected;
         document.getElementById('totalCount').textContent = total;
+        
+        // تحديث عدادات التبويبات
+        document.getElementById('allCount').textContent = total;
+        document.getElementById('pendingTabCount').textContent = pending;
+        document.getElementById('approvedTabCount').textContent = approved - active;
+        document.getElementById('rejectedTabCount').textContent = rejected;
+        document.getElementById('activeTabCount').textContent = active;
     }
 
     /**
@@ -113,7 +327,7 @@ class AdminDashboard {
      */
     showLoading() {
         document.getElementById('loadingSpinner').style.display = 'block';
-        document.getElementById('bookingsTable').style.display = 'none';
+        document.getElementById('bookingsGrid').style.display = 'none';
         document.getElementById('emptyState').style.display = 'none';
     }
 
@@ -122,61 +336,87 @@ class AdminDashboard {
      */
     showEmptyState() {
         document.getElementById('loadingSpinner').style.display = 'none';
-        document.getElementById('bookingsTable').style.display = 'none';
+        document.getElementById('bookingsGrid').style.display = 'none';
         document.getElementById('emptyState').style.display = 'block';
     }
 
     /**
-     * عرض الحجوزات في الجدول
+     * عرض الحجوزات في الكاردات
      * @param {Array} bookings - قائمة الحجوزات
      */
     renderBookings(bookings) {
-        const tbody = document.getElementById('bookingsTableBody');
+        const grid = document.getElementById('bookingsGrid');
+        const filterBar = document.querySelector('.bookings-filter-bar');
         
         if (bookings.length === 0) {
             this.showEmptyState();
+            if (filterBar) filterBar.style.display = 'none';
             return;
         }
 
         document.getElementById('loadingSpinner').style.display = 'none';
-        document.getElementById('bookingsTable').style.display = 'block';
+        document.getElementById('bookingsGrid').style.display = 'grid';
         document.getElementById('emptyState').style.display = 'none';
+        if (filterBar) filterBar.style.display = 'flex';
 
-        tbody.innerHTML = bookings.map(booking => this.createBookingRow(booking)).join('');
+        grid.innerHTML = bookings.map(booking => this.createBookingCard(booking)).join('');
 
-        // إضافة مستمعي الأحداث لأزرار الإجراءات
+        // إضافة مستمعي الأحداث لأزرار الإجراعات
         this.attachActionListeners();
     }
 
     /**
-     * إنشاء صف جدول للحجز
+     * إنشاء كارد للحجز
      * @param {Object} booking - بيانات الحجز
-     * @returns {string} - HTML للصف
+     * @returns {string} - HTML للكارد
      */
-    createBookingRow(booking) {
+    createBookingCard(booking) {
         const statusClass = `status-${booking.status}`;
         const statusText = this.getStatusText(booking.status);
         const actionButtons = this.getActionButtons(booking);
+        const isActive = this.isActiveBooking(booking);
 
         return `
-            <tr data-booking-id="${booking.id}">
-                <td>
-                    <span class="field-badge-table">${booking.field_name}</span>
-                </td>
-                <td>${booking.customer_name}</td>
-                <td dir="ltr" style="text-align: right;">${booking.phone}</td>
-                <td>${formatDate(booking.booking_date)}</td>
-                <td>${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</td>
-                <td>
+            <div class="booking-card" data-booking-id="${booking.id}">
+                <div class="booking-card-header">
+                    <span class="booking-card-field">${booking.field_name}</span>
                     <span class="status-badge ${statusClass}">${statusText}</span>
-                </td>
-                <td>${formatDateTime(booking.created_at)}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${actionButtons}
+                </div>
+                <div class="booking-card-body">
+                    <div class="booking-info-row">
+                        <div class="booking-info-icon">👤</div>
+                        <div class="booking-info-content">
+                            <div class="booking-info-label">العميل</div>
+                            <div class="booking-info-value">${booking.customer_name}</div>
+                        </div>
                     </div>
-                </td>
-            </tr>
+                    <div class="booking-info-row">
+                        <div class="booking-info-icon">📞</div>
+                        <div class="booking-info-content">
+                            <div class="booking-info-label">رقم الجوال</div>
+                            <div class="booking-phone-row">
+                                <div class="booking-info-value" dir="ltr">${booking.phone}</div>
+                                <button class="copy-phone-btn" data-phone="${booking.phone}">📋 نسخ</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="booking-info-row">
+                        <div class="booking-info-icon">📅</div>
+                        <div class="booking-info-content">
+                            <div class="booking-info-label">التاريخ والوقت</div>
+                            <div class="booking-info-value">${formatDate(booking.booking_date)}</div>
+                            <div class="booking-info-value">${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</div>
+                        </div>
+                    </div>
+                    ${isActive ? '<div class="booking-info-row"><div class="booking-info-icon">🎮</div><div class="booking-info-content"><div class="booking-info-value" style="color: var(--success-color);">جاري الآن</div></div></div>' : ''}
+                </div>
+                <div class="booking-card-footer">
+                    <button class="btn btn-details view-details-btn" data-id="${booking.id}">
+                        🔍 عرض التفاصيل
+                    </button>
+                    ${actionButtons}
+                </div>
+            </div>
         `;
     }
 
@@ -245,6 +485,150 @@ class AdminDashboard {
                 this.handleReject(bookingId);
             });
         });
+
+        // أزرار عرض التفاصيل
+        const detailsButtons = document.querySelectorAll('.view-details-btn');
+        detailsButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const bookingId = e.target.dataset.id;
+                this.showBookingDetails(bookingId);
+            });
+        });
+
+        // أزرار نسخ رقم الجوال
+        const copyButtons = document.querySelectorAll('.copy-phone-btn');
+        copyButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const phone = e.target.dataset.phone;
+                this.copyToClipboard(phone);
+            });
+        });
+
+        // إغلاق نافذة التفاصيل
+        const closeDetailsBtn = document.getElementById('closeDetailsModal');
+        if (closeDetailsBtn) {
+            closeDetailsBtn.addEventListener('click', () => {
+                this.closeDetailsModal();
+            });
+        }
+
+        // إغلاق عند النقر خارج النافذة
+        const detailsModal = document.getElementById('detailsModal');
+        if (detailsModal) {
+            detailsModal.addEventListener('click', (e) => {
+                if (e.target === detailsModal) {
+                    this.closeDetailsModal();
+                }
+            });
+        }
+    }
+
+    /**
+     * عرض تفاصيل الحجز
+     */
+    showBookingDetails(bookingId) {
+        const booking = this.bookings.find(b => b.id === bookingId);
+        if (!booking) return;
+
+        const statusClass = `status-${booking.status}`;
+        const statusText = this.getStatusText(booking.status);
+        const isActive = this.isActiveBooking(booking);
+        const actionButtons = this.getActionButtons(booking);
+
+        // منع التمرير
+        document.body.classList.add('modal-open');
+
+        const modalBody = document.getElementById('detailsModalBody');
+        modalBody.innerHTML = `
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-icon">⚽</div>
+                    <div class="detail-content">
+                        <div class="detail-label">الملعب</div>
+                        <div class="detail-value">${booking.field_name}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">👤</div>
+                    <div class="detail-content">
+                        <div class="detail-label">اسم العميل</div>
+                        <div class="detail-value">${booking.customer_name}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📞</div>
+                    <div class="detail-content">
+                        <div class="detail-label">رقم الجوال</div>
+                        <div class="detail-phone">
+                            <div class="detail-value" dir="ltr">${booking.phone}</div>
+                            <button class="copy-phone-btn" data-phone="${booking.phone}">📋 نسخ</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📅</div>
+                    <div class="detail-content">
+                        <div class="detail-label">تاريخ الحجز</div>
+                        <div class="detail-value">${formatDate(booking.booking_date)}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">⏰</div>
+                    <div class="detail-content">
+                        <div class="detail-label">وقت الحجز</div>
+                        <div class="detail-value">${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📊</div>
+                    <div class="detail-content">
+                        <div class="detail-label">الحالة</div>
+                        <div class="detail-value">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            ${isActive ? '<span style="color: var(--success-color); margin-right: 0.5rem;">• جاري الآن</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📄</div>
+                    <div class="detail-content">
+                        <div class="detail-label">تاريخ الطلب</div>
+                        <div class="detail-value">${formatDateTime(booking.created_at)}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-actions">
+                ${actionButtons}
+            </div>
+        `;
+
+        document.getElementById('detailsModal').classList.add('active');
+        
+        // إعادة ربط الأزرار
+        setTimeout(() => this.attachActionListeners(), 100);
+    }
+
+    /**
+     * إغلاق نافذة التفاصيل
+     */
+    closeDetailsModal() {
+        document.getElementById('detailsModal').classList.remove('active');
+        // السماح بالتمرير مرة أخرى
+        document.body.classList.remove('modal-open');
+    }
+
+    /**
+     * نسخ رقم الجوال إلى الحافظة
+     */
+    async copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('تم نسخ رقم الجوال بنجاح', 'success');
+        } catch (error) {
+            console.error('خطأ في النسخ:', error);
+            showToast('فشل في نسخ رقم الجوال', 'error');
+        }
     }
 
     /**
@@ -261,6 +645,16 @@ class AdminDashboard {
             
             if (result.success) {
                 showToast('تم تأكيد الحجز بنجاح!', 'success');
+                
+                const booking = this.bookings.find(b => b.id === bookingId);
+                if (booking) {
+                    // إرسال إشعار محلي
+                    await notificationManager.notifyBookingApproved(booking);
+                    
+                    // إرسال إشعار Push للموظفين (سيعمل في قفل الشاشة)
+                    await this.sendPushNotification(booking, 'staff');
+                }
+                
                 await this.loadBookings();
             } else {
                 showToast('فشل في تحديث الحجز', 'error');
