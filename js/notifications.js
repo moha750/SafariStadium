@@ -100,9 +100,11 @@ class NotificationManager {
      */
     async saveSubscription(subscription) {
         try {
+            // تحويل keys إلى p256dh و auth منفصلين
             const subscriptionData = {
                 endpoint: subscription.endpoint,
-                keys: subscription.keys,
+                p256dh: subscription.keys.p256dh,
+                auth: subscription.keys.auth,
                 user_type: this.getUserType(),
                 created_at: new Date().toISOString()
             };
@@ -132,9 +134,9 @@ class NotificationManager {
                 throw error;
             }
 
-            console.log('تم حفظ الاشتراك في Supabase');
+            console.log('تم حفظ الاشتراك في Supabase بنجاح');
             // حفظ في localStorage كنسخة احتياطية
-            localStorage.setItem('push_subscription', JSON.stringify(subscriptionData));
+            localStorage.setItem('push_subscription', JSON.stringify(subscription));
         } catch (error) {
             console.error('خطأ في حفظ الاشتراك:', error);
         }
