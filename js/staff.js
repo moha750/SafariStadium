@@ -69,6 +69,14 @@ class StaffPage {
             });
         }
 
+        // زر اختبار الإشعارات
+        const testNotificationBtn = document.getElementById('testNotificationBtn');
+        if (testNotificationBtn) {
+            testNotificationBtn.addEventListener('click', async () => {
+                await this.testNotification();
+            });
+        }
+
         // زر تثبيت التطبيق
         const installAppBtn = document.getElementById('installAppBtn');
         if (installAppBtn) {
@@ -449,6 +457,73 @@ class StaffPage {
         } else {
             showToast('يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
         }
+    }
+
+    /**
+     * اختبار الإشعارات
+     */
+    async testNotification() {
+        const results = [];
+        
+        try {
+            if (!notificationManager.isSupported()) {
+                results.push('❌ الإشعارات غير مدعومة في هذا المتصفح');
+                this.showTestResults(results);
+                return;
+            }
+            results.push('✅ الإشعارات مدعومة في المتصفح');
+            
+            const permission = Notification.permission;
+            results.push(`📋 حالة الإذن: ${permission}`);
+            
+            if (permission === 'denied') {
+                results.push('❌ الإذن مرفوض - يجب السماح من إعدادات المتصفح');
+                this.showTestResults(results);
+                return;
+            }
+            
+            if (permission === 'default') {
+                results.push('⚠️ لم يتم طلب الإذن بعد - اضغط "تفعيل الإشعارات" أولاً');
+                this.showTestResults(results);
+                return;
+            }
+            
+            results.push('✅ الإذن ممنوح');
+            
+            if ('serviceWorker' in navigator) {
+                await navigator.serviceWorker.ready;
+                results.push('✅ Service Worker جاهز');
+            }
+            
+            results.push('🧪 جاري إرسال إشعار تجريبي...');
+            
+            await notificationManager.sendLocalNotification('🧪 اختبار الإشعارات', {
+                body: 'إذا رأيت هذا الإشعار، فالنظام يعمل بشكل صحيح! ✅',
+                tag: 'test-notification'
+            });
+            
+            results.push('✅ تم إرسال الإشعار التجريبي!');
+            results.push('');
+            results.push('📱 للاختبار على الجوال:');
+            results.push('1. ثبّت التطبيق');
+            results.push('2. أغلق التطبيق تماماً');
+            results.push('3. أقفل الشاشة');
+            results.push('4. من جهاز آخر، وافق على حجز');
+            results.push('5. يجب أن يصل إشعار في قفل الشاشة!');
+            
+        } catch (error) {
+            results.push(`❌ خطأ: ${error.message}`);
+            console.error('Test error:', error);
+        }
+        
+        this.showTestResults(results);
+    }
+
+    showTestResults(results) {
+        const message = results.join('\n');
+        console.log('🧪 نتائج الاختبار:\n' + message);
+        alert('🧪 نتائج اختبار الإشعارات:\n\n' + message);
+        showToast('تم إجراء الاختبار - راجع التفاصيل', 'success');
     }
 
     /**

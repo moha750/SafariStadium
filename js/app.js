@@ -4,7 +4,8 @@
  */
 
 import supabaseClient from './supabase-client.js';
-import { showToast, validatePhone, formatDate, formatTime } from './utils.js';
+import { showToast, formatDate, formatTime } from './utils.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 class BookingApp {
     constructor() {
@@ -273,14 +274,11 @@ class BookingApp {
     }
 
     /**
-     * تنسيق رقم الهاتف أثناء الإدخال
-     * @param {HTMLInputElement} input - حقل الإدخال
+     * تنسيق إدخال رقم الهاتف
      */
     formatPhoneInput(input) {
-        // إزالة أي شيء غير الأرقام
-        let value = input.value.replace(/[^\d]/g, '');
+        let value = input.value.replace(/\D/g, '');
         
-        // التأكد من أن الرقم لا يتجاوز 10 أرقام
         if (value.length > 10) {
             value = value.substring(0, 10);
         }
@@ -289,38 +287,44 @@ class BookingApp {
     }
 
     /**
-     * التحقق من صحة النموذج
-     * @returns {Object} - نتيجة التحقق
+     * إرسال إشعار Push للمدير عند طلب حجز جديد
      */
-    validateForm() {
-        const formData = new FormData(this.form);
-        const data = Object.fromEntries(formData);
-
-        // التحقق من الاسم
-        if (!data.customerName || data.customerName.trim().length < 3) {
-            return { valid: false, message: 'يرجى إدخال اسم صحيح (3 أحرف على الأقل)' };
+    async notifyAdminNewBooking(bookingData) {
+        try {
+            const response = await fetch(
+                `${SUPABASE_URL}/functions/v1/send-push-notification`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: '🔔 طلب حجز جديد!',
+                        body: `طلب حجز من ${bookingData.customer_name} للملعب ${bookingData.field_name} - ${bookingData.start_time}`,
+                        icon: '/icon-192.png',
+                        userType: 'admin',
+                        data: {
+                            customerName: bookingData.customer_name,
+                            fieldName: bookingData.field_name,
+                            bookingDate: bookingData.booking_date,
+                            startTime: bookingData.start_time,
+                            endTime: bookingData.end_time,
+                            phone: bookingData.phone,
+                            url: '/admin.html'
+                        }
+                    })
+                }
+            );
+            
+            if (response.ok) {
+                console.log('تم إرسال إشعار للمدير بنجاح');
+            } else {
+                console.error('فشل إرسال الإشعار للمدير');
+            }
+        } catch (error) {
+            console.error('خطأ في إرسال الإشعار للمدير:', error);
         }
-
-        // التحقق من رقم الهاتف
-        if (!validatePhone(data.phone)) {
-            return { valid: false, message: 'يرجى إدخال رقم جوال صحيح يبدأ بـ 05 ويتكون من 10 أرقام (مثال: 0501234567)' };
-        }
-
-        // التحقق من التاريخ
-        const selectedDate = new Date(data.bookingDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (selectedDate < today) {
-            return { valid: false, message: 'لا يمكن الحجز في تاريخ سابق' };
-        }
-
-        // التحقق من اختيار الفترة الزمنية
-        if (!this.selectedSlot) {
-            return { valid: false, message: 'يرجى اختيار فترة زمنية' };
-        }
-
-        return { valid: true, data };
     }
 
     /**
@@ -371,6 +375,17 @@ class BookingApp {
 
             if (result.success) {
                 showToast('تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً', 'success');
+                
+                // إرسال إشعار للمدير عن الحجز الجديد
+                await this.notifyAdminNewBooking({
+                    customer_name: formData.customerName.trim(),
+                    field_name: formData.fieldName,
+                    booking_date: formData.bookingDate,
+                    start_time: this.selectedSlot.startTime,
+                    end_time: this.selectedSlot.endTime,
+                    phone: formData.phone
+                });
+                
                 this.closeModal();
             } else {
                 showToast('حدث خطأ أثناء الحجز. يرجى المحاولة مرة أخرى', 'error');

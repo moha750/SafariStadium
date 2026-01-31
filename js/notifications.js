@@ -8,7 +8,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 class NotificationManager {
     constructor() {
-        this.vapidPublicKey = 'YOUR_VAPID_PUBLIC_KEY'; // سيتم تحديثه لاحقاً
+        this.vapidPublicKey = 'BFuiqLBPt6Lm_6CkcBezBzB0viKMNxAum49UkN9xEAdjrbsPmFboGI7DGGZ-bLPfUXMQNS8OhwqB5PtSpdq5PrU'; // سيتم تحديثه لاحقاً
         this.subscription = null;
     }
 
