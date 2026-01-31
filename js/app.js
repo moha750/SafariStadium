@@ -31,34 +31,44 @@ class BookingApp {
      */
     generateTimeSlots() {
         const slots = [];
-        const startHour = 15; // 3:30 PM
-        const startMinute = 30;
+        
+        // كل فترة ساعة ونصف (90 دقيقة)
+        const slotDuration = 90; // دقيقة
         
         // الفترات من 3:30 عصراً حتى 11:30 مساءً
-        for (let hour = startHour; hour <= 23; hour++) {
-            const minute = (hour === startHour) ? startMinute : 0;
-            if (hour === 23 && minute > 30) break;
+        let currentTime = 15 * 60 + 30; // 15:30 بالدقائق
+        const endOfDay = 23 * 60 + 30; // 23:30 بالدقائق
+        
+        while (currentTime <= endOfDay) {
+            const startHour = Math.floor(currentTime / 60);
+            const startMinute = currentTime % 60;
+            const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
             
-            const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-            const endHour = minute === 30 ? hour + 2 : hour + 1;
-            const endMinute = minute === 30 ? 0 : 30;
+            const endTimeMinutes = currentTime + slotDuration;
+            const endHour = Math.floor(endTimeMinutes / 60);
+            const endMinute = endTimeMinutes % 60;
             const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
             
             slots.push({ startTime, endTime });
+            currentTime += slotDuration;
         }
         
         // الفترات من 12:00 منتصف الليل حتى 5:00 فجراً
-        for (let hour = 0; hour <= 3; hour++) {
-            for (let minute = 0; minute <= 30; minute += 30) {
-                if (hour === 3 && minute > 30) break;
-                
-                const startTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-                const endHour = minute === 30 ? hour + 2 : hour + 1;
-                const endMinute = minute === 30 ? 0 : 30;
-                const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-                
-                slots.push({ startTime, endTime });
-            }
+        currentTime = 0; // 00:00
+        const endOfNight = 5 * 60; // 05:00
+        
+        while (currentTime < endOfNight) {
+            const startHour = Math.floor(currentTime / 60);
+            const startMinute = currentTime % 60;
+            const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+            
+            const endTimeMinutes = currentTime + slotDuration;
+            const endHour = Math.floor(endTimeMinutes / 60);
+            const endMinute = endTimeMinutes % 60;
+            const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+            
+            slots.push({ startTime, endTime });
+            currentTime += slotDuration;
         }
         
         return slots;
