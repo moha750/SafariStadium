@@ -438,16 +438,123 @@ class StaffPage {
         document.body.classList.remove('modal-open');
     }
 
-    /**
-     * تفعيل الإشعارات
-     */
-    async enableNotifications() {
-        const hasPermission = await notificationManager.requestPermission();
+// أزرار عرض التفاصيل
+const viewButtons = document.querySelectorAll('.btn-view-customer');
+viewButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const bookingId = e.target.dataset.id;
+        this.showCustomerDetails(bookingId);
+    });
+});
+}
+
+/**
+ * عرض تفاصيل العميل
+ */
+showCustomerDetails(bookingId) {
+const booking = this.bookings.find(b => b.id === bookingId);
+if (!booking) return;
+
+// منع التمرير
+document.body.classList.add('modal-open');
+
+const isActive = this.isActiveBooking(booking);
+const modalBody = document.getElementById('customerModalBody');
         
-        if (hasPermission) {
-            await notificationManager.subscribe();
-            showToast('تم تفعيل الإشعارات بنجاح! ستصلك إشعارات قبل بدء الحجوزات', 'success');
+modalBody.innerHTML = `
+    <div class="customer-details-grid">
+        <div class="customer-detail-item">
+            <div class="customer-detail-icon">⚽</div>
+            <div class="customer-detail-content">
+                <div class="customer-detail-label">الملعب</div>
+                <div class="customer-detail-value">${booking.field_name}</div>
+            </div>
+        </div>
+        <div class="customer-detail-item">
+            <div class="customer-detail-icon">👤</div>
+            <div class="customer-detail-content">
+                <div class="customer-detail-label">اسم العميل</div>
+                <div class="customer-detail-value">${booking.customer_name}</div>
+            </div>
+        </div>
+        <div class="customer-detail-item">
+            <div class="customer-detail-icon">📞</div>
+            <div class="customer-detail-content">
+                <div class="customer-detail-label">رقم الجوال</div>
+                <div class="customer-detail-value" dir="ltr">${booking.phone}</div>
+                <div class="customer-phone-actions">
+                    <a href="tel:${booking.phone}" class="btn-call-customer">
+                        📞 اتصال
+                    </a>
+                    <button class="copy-phone-btn-staff" data-phone="${booking.phone}">📋 نسخ</button>
+                </div>
+            </div>
+        </div>
+        <div class="customer-detail-item">
+            <div class="customer-detail-icon">📅</div>
+            <div class="customer-detail-content">
+                <div class="customer-detail-label">تاريخ الحجز</div>
+                <div class="customer-detail-value">${formatDate(booking.booking_date)}</div>
+            </div>
+        </div>
+        <div class="customer-detail-item">
+            <div class="customer-detail-icon">⏰</div>
+            <div class="customer-detail-content">
+                <div class="customer-detail-label">وقت الحجز</div>
+                <div class="customer-detail-value">${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</div>
+                ${isActive ? '<div style="color: var(--warning-color); font-weight: 700; margin-top: 0.5rem;">🎮 جاري الآن</div>' : ''}
+            </div>
+        </div>
+        <div class="customer-detail-item">
+            <div class="customer-detail-icon">📄</div>
+            <div class="customer-detail-content">
+                <div class="customer-detail-label">تاريخ الطلب</div>
+                <div class="customer-detail-value">${formatDateTime(booking.created_at)}</div>
+            </div>
+        </div>
+    </div>
+`;
+
+document.getElementById('customerModal').classList.add('active');
+        
+// إعادة ربط أزرار النسخ
+setTimeout(() => this.attachCardListeners(), 100);
+}
+
+/**
+ * إغلاق نافذة التفاصيل
+ */
+closeCustomerModal() {
+document.getElementById('customerModal').classList.remove('active');
+// السماح بالتمرير مرة أخرى
+document.body.classList.remove('modal-open');
+}
+
+/**
+ * تفعيل الإشعارات
+ */
+async enableNotifications() {
+try {
+    // التحقق من دعم الإشعارات
+    if (!notificationManager.isSupported()) {
+        showToast('⚠️ الإشعارات غير مدعومة في هذا المتصفح. استخدم Chrome على Android أو Safari على iOS', 'error');
+        return;
+    }
+
+    // التحقق من HTTPS
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        showToast('⚠️ الإشعارات تتطلب HTTPS. يرجى استخدام رابط آمن (https://)', 'error');
+        return;
+    }
+
+    const hasPermission = await notificationManager.requestPermission();
             
+    if (hasPermission) {
+        const subscription = await notificationManager.subscribe();
+                
+        if (subscription) {
+            showToast('✅ تم تفعيل الإشعارات بنجاح! ستصلك إشعارات عند وجود حجوزات جديدة', 'success');
+                    
             // تحديث نص الزر
             const btn = document.getElementById('enableNotificationsBtn');
             if (btn) {
@@ -455,13 +562,22 @@ class StaffPage {
                 btn.disabled = true;
             }
         } else {
-            showToast('يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
+            showToast('❌ فشل في الاشتراك. تحقق من Console للتفاصيل', 'error');
         }
+    } else {
+        showToast('⚠️ يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
     }
+} catch (error) {
+    console.error('خطأ في تفعيل الإشعارات:', error);
+    showToast(`❌ خطأ: ${error.message}`, 'error');
+}
+}
 
-    /**
-     * اختبار الإشعارات
-     */
+/**
+ * اختبار الإشعارات
+ */
+async testNotification() {
+const results = [];
     async testNotification() {
         const results = [];
         

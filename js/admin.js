@@ -155,20 +155,42 @@ class AdminDashboard {
      * تفعيل الإشعارات
      */
     async enableNotifications() {
-        const hasPermission = await notificationManager.requestPermission();
-        
-        if (hasPermission) {
-            await notificationManager.subscribe();
-            showToast('تم تفعيل الإشعارات بنجاح! ستصلك إشعارات عند وجود حجوزات جديدة', 'success');
-            
-            // تحديث نص الزر
-            const btn = document.getElementById('enableNotificationsBtn');
-            if (btn) {
-                btn.innerHTML = '🔔 الإشعارات مفعلة';
-                btn.disabled = true;
+        try {
+            // التحقق من دعم الإشعارات
+            if (!notificationManager.isSupported()) {
+                showToast('⚠️ الإشعارات غير مدعومة في هذا المتصفح. استخدم Chrome على Android أو Safari على iOS', 'error');
+                return;
             }
-        } else {
-            showToast('يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
+
+            // التحقق من HTTPS
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                showToast('⚠️ الإشعارات تتطلب HTTPS. يرجى استخدام رابط آمن (https://)', 'error');
+                return;
+            }
+
+            const hasPermission = await notificationManager.requestPermission();
+            
+            if (hasPermission) {
+                const subscription = await notificationManager.subscribe();
+                
+                if (subscription) {
+                    showToast('✅ تم تفعيل الإشعارات بنجاح! ستصلك إشعارات عند وجود حجوزات جديدة', 'success');
+                    
+                    // تحديث نص الزر
+                    const btn = document.getElementById('enableNotificationsBtn');
+                    if (btn) {
+                        btn.innerHTML = '🔔 الإشعارات مفعلة';
+                        btn.disabled = true;
+                    }
+                } else {
+                    showToast('❌ فشل في الاشتراك. تحقق من Console للتفاصيل', 'error');
+                }
+            } else {
+                showToast('⚠️ يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
+            }
+        } catch (error) {
+            console.error('خطأ في تفعيل الإشعارات:', error);
+            showToast(`❌ خطأ: ${error.message}`, 'error');
         }
     }
 
