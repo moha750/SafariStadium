@@ -17,3 +17,7 @@ const SUPABASE_CONFIG = {
 
 // تصدير الإعدادات
 export default SUPABASE_CONFIG;
+
+// تصدير المتغيرات بشكل مباشر للاستخدام السهل
+export const SUPABASE_URL = SUPABASE_CONFIG.url;
+export const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
