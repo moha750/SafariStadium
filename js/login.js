@@ -23,7 +23,7 @@ class LoginPage {
      * التحقق من حالة تسجيل الدخول
      */
     checkAuth() {
-        const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+        const isLoggedIn = localStorage.getItem('adminLoggedIn');
         if (isLoggedIn === 'true') {
             window.location.href = 'admin.html';
         }
@@ -52,7 +52,7 @@ class LoginPage {
         // التحقق من بيانات الاعتماد
         if (username === this.credentials.username && password === this.credentials.password) {
             // تسجيل الدخول بنجاح
-            sessionStorage.setItem('adminLoggedIn', 'true');
+            localStorage.setItem('adminLoggedIn', 'true');
             
             // تعطيل الزر وعرض رسالة التحميل
             const submitBtn = this.form.querySelector('button[type="submit"]');

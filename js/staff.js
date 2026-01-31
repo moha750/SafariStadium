@@ -302,6 +302,9 @@ class StaffPage {
                     <button class="btn-view-customer" data-id="${booking.id}">
                         📋 عرض التفاصيل الكاملة
                     </button>
+                    <button class="btn-whatsapp-staff" data-phone="${booking.phone}" data-name="${booking.customer_name}" data-field="${booking.field_name}" data-date="${booking.booking_date}" data-time="${booking.start_time}">
+                        📱 واتساب
+                    </button>
                 </div>
             </div>
         `;
@@ -318,6 +321,20 @@ class StaffPage {
                 e.stopPropagation();
                 const phone = e.target.dataset.phone;
                 this.copyToClipboard(phone);
+            });
+        });
+
+        // أزرار واتساب
+        const whatsappButtons = document.querySelectorAll('.btn-whatsapp-staff');
+        whatsappButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const phone = e.target.dataset.phone;
+                const name = e.target.dataset.name;
+                const field = e.target.dataset.field;
+                const date = e.target.dataset.date;
+                const time = e.target.dataset.time;
+                this.sendWhatsApp(phone, name, field, date, time);
             });
         });
 
@@ -449,6 +466,15 @@ class StaffPage {
         } else {
             showToast('التطبيق مثبت بالفعل أو غير متاح للتثبيت', 'error');
         }
+    }
+
+    /**
+     * إرسال رسالة واتساب
+     */
+    sendWhatsApp(phone, name, field, date, time) {
+        const message = `مرحباً ${name}،\n\nتأكيد حجزك في ملاعب سفاري:\n📍 الملعب: ${field}\n📅 التاريخ: ${date}\n⏰ الوقت: ${time}\n\nنتمنى لك تجربة ممتعة! ⚽`;
+        const whatsappUrl = `https://wa.me/${phone.replace(/^0/, '966')}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
     }
 
     /**

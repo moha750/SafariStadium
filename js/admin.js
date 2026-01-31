@@ -33,11 +33,19 @@ class AdminDashboard {
      * التحقق من تسجيل الدخول
      */
     checkAuth() {
-        const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+        const isLoggedIn = localStorage.getItem('adminLoggedIn');
         if (isLoggedIn !== 'true') {
             window.location.href = 'login.html';
             return;
         }
+    }
+
+    /**
+     * تسجيل الخروج
+     */
+    logout() {
+        localStorage.removeItem('adminLoggedIn');
+        window.location.href = 'login.html';
     }
 
     /**
@@ -65,7 +73,9 @@ class AdminDashboard {
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
-                this.handleLogout();
+                if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                    this.logout();
+                }
             });
         }
 
@@ -440,6 +450,12 @@ class AdminDashboard {
      * @returns {string} - HTML للأزرار
      */
     getActionButtons(booking) {
+        const whatsappBtn = `
+            <button class="btn btn-secondary whatsapp-btn" data-phone="${booking.phone}" data-name="${booking.customer_name}" data-field="${booking.field_name}" data-date="${booking.booking_date}" data-time="${booking.start_time}">
+                📱 واتساب
+            </button>
+        `;
+        
         if (booking.status === 'pending') {
             return `
                 <button class="btn btn-success approve-btn" data-id="${booking.id}">
@@ -448,18 +464,21 @@ class AdminDashboard {
                 <button class="btn btn-danger reject-btn" data-id="${booking.id}">
                     ✗ رفض
                 </button>
+                ${whatsappBtn}
             `;
         } else if (booking.status === 'approved') {
             return `
                 <button class="btn btn-danger reject-btn" data-id="${booking.id}">
                     ✗ إلغاء
                 </button>
+                ${whatsappBtn}
             `;
         } else {
             return `
                 <button class="btn btn-success approve-btn" data-id="${booking.id}">
                     ✓ موافقة
                 </button>
+                ${whatsappBtn}
             `;
         }
     }
@@ -483,6 +502,19 @@ class AdminDashboard {
             btn.addEventListener('click', (e) => {
                 const bookingId = e.target.dataset.id;
                 this.handleReject(bookingId);
+            });
+        });
+
+        // أزرار واتساب
+        const whatsappButtons = document.querySelectorAll('.whatsapp-btn');
+        whatsappButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const phone = e.target.dataset.phone;
+                const name = e.target.dataset.name;
+                const field = e.target.dataset.field;
+                const date = e.target.dataset.date;
+                const time = e.target.dataset.time;
+                this.sendWhatsApp(phone, name, field, date, time);
             });
         });
 
@@ -616,6 +648,15 @@ class AdminDashboard {
         document.getElementById('detailsModal').classList.remove('active');
         // السماح بالتمرير مرة أخرى
         document.body.classList.remove('modal-open');
+    }
+
+    /**
+     * إرسال رسالة واتساب
+     */
+    sendWhatsApp(phone, name, field, date, time) {
+        const message = `مرحباً ${name}،\n\nتأكيد حجزك في ملاعب سفاري:\n📍 الملعب: ${field}\n📅 التاريخ: ${date}\n⏰ الوقت: ${time}\n\nنتمنى لك تجربة ممتعة! ⚽`;
+        const whatsappUrl = `https://wa.me/${phone.replace(/^0/, '966')}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
     }
 
     /**

@@ -165,12 +165,19 @@ class SupabaseClient {
             const bookings = await response.json();
             
             // التحقق من التداخل الزمني
+            // الحجزان يتداخلان فقط إذا كان هناك تقاطع حقيقي (وليس مجرد نقطة التقاء)
             const hasConflict = bookings.some(booking => {
-                return (
-                    (start_time >= booking.start_time && start_time < booking.end_time) ||
-                    (end_time > booking.start_time && end_time <= booking.end_time) ||
-                    (start_time <= booking.start_time && end_time >= booking.end_time)
-                );
+                // تحويل الأوقات لصيغة موحدة للمقارنة
+                const newStart = start_time.substring(0, 5);
+                const newEnd = end_time.substring(0, 5);
+                const existingStart = booking.start_time.substring(0, 5);
+                const existingEnd = booking.end_time.substring(0, 5);
+                
+                // يوجد تداخل إذا:
+                // 1. الحجز الجديد يبدأ قبل انتهاء الحجز الموجود
+                // 2. الحجز الجديد ينتهي بعد بداية الحجز الموجود
+                // ولكن نسمح بالحجوزات المتتالية (نهاية واحد = بداية الآخر)
+                return (newStart < existingEnd && newEnd > existingStart);
             });
 
             return !hasConflict;
