@@ -438,30 +438,20 @@ class StaffPage {
         document.body.classList.remove('modal-open');
     }
 
-// أزرار عرض التفاصيل
-const viewButtons = document.querySelectorAll('.btn-view-customer');
-viewButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const bookingId = e.target.dataset.id;
-        this.showCustomerDetails(bookingId);
-    });
-});
-}
+    /**
+     * عرض تفاصيل العميل
+     */
+    showCustomerDetails(bookingId) {
+        const booking = this.bookings.find(b => b.id === bookingId);
+        if (!booking) return;
 
-/**
- * عرض تفاصيل العميل
- */
-showCustomerDetails(bookingId) {
-const booking = this.bookings.find(b => b.id === bookingId);
-if (!booking) return;
+        // منع التمرير
+        document.body.classList.add('modal-open');
 
-// منع التمرير
-document.body.classList.add('modal-open');
-
-const isActive = this.isActiveBooking(booking);
-const modalBody = document.getElementById('customerModalBody');
+        const isActive = this.isActiveBooking(booking);
+        const modalBody = document.getElementById('customerModalBody');
         
-modalBody.innerHTML = `
+        modalBody.innerHTML = `
     <div class="customer-details-grid">
         <div class="customer-detail-item">
             <div class="customer-detail-icon">⚽</div>
@@ -515,69 +505,67 @@ modalBody.innerHTML = `
     </div>
 `;
 
-document.getElementById('customerModal').classList.add('active');
+        document.getElementById('customerModal').classList.add('active');
         
-// إعادة ربط أزرار النسخ
-setTimeout(() => this.attachCardListeners(), 100);
-}
-
-/**
- * إغلاق نافذة التفاصيل
- */
-closeCustomerModal() {
-document.getElementById('customerModal').classList.remove('active');
-// السماح بالتمرير مرة أخرى
-document.body.classList.remove('modal-open');
-}
-
-/**
- * تفعيل الإشعارات
- */
-async enableNotifications() {
-try {
-    // التحقق من دعم الإشعارات
-    if (!notificationManager.isSupported()) {
-        showToast('⚠️ الإشعارات غير مدعومة في هذا المتصفح. استخدم Chrome على Android أو Safari على iOS', 'error');
-        return;
+        // إعادة ربط أزرار النسخ
+        setTimeout(() => this.attachCardListeners(), 100);
     }
 
-    // التحقق من HTTPS
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-        showToast('⚠️ الإشعارات تتطلب HTTPS. يرجى استخدام رابط آمن (https://)', 'error');
-        return;
+    /**
+     * إغلاق نافذة التفاصيل
+     */
+    closeCustomerModal() {
+        document.getElementById('customerModal').classList.remove('active');
+        // السماح بالتمرير مرة أخرى
+        document.body.classList.remove('modal-open');
     }
 
-    const hasPermission = await notificationManager.requestPermission();
-            
-    if (hasPermission) {
-        const subscription = await notificationManager.subscribe();
-                
-        if (subscription) {
-            showToast('✅ تم تفعيل الإشعارات بنجاح! ستصلك إشعارات عند وجود حجوزات جديدة', 'success');
-                    
-            // تحديث نص الزر
-            const btn = document.getElementById('enableNotificationsBtn');
-            if (btn) {
-                btn.innerHTML = '🔔 الإشعارات مفعلة';
-                btn.disabled = true;
+    /**
+     * تفعيل الإشعارات
+     */
+    async enableNotifications() {
+        try {
+            // التحقق من دعم الإشعارات
+            if (!notificationManager.isSupported()) {
+                showToast('⚠️ الإشعارات غير مدعومة في هذا المتصفح. استخدم Chrome على Android أو Safari على iOS', 'error');
+                return;
             }
-        } else {
-            showToast('❌ فشل في الاشتراك. تحقق من Console للتفاصيل', 'error');
-        }
-    } else {
-        showToast('⚠️ يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
-    }
-} catch (error) {
-    console.error('خطأ في تفعيل الإشعارات:', error);
-    showToast(`❌ خطأ: ${error.message}`, 'error');
-}
-}
 
-/**
- * اختبار الإشعارات
- */
-async testNotification() {
-const results = [];
+            // التحقق من HTTPS
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                showToast('⚠️ الإشعارات تتطلب HTTPS. يرجى استخدام رابط آمن (https://)', 'error');
+                return;
+            }
+
+            const hasPermission = await notificationManager.requestPermission();
+            
+            if (hasPermission) {
+                const subscription = await notificationManager.subscribe();
+                
+                if (subscription) {
+                    showToast('✅ تم تفعيل الإشعارات بنجاح! ستصلك إشعارات عند وجود حجوزات جديدة', 'success');
+                    
+                    // تحديث نص الزر
+                    const btn = document.getElementById('enableNotificationsBtn');
+                    if (btn) {
+                        btn.innerHTML = '🔔 الإشعارات مفعلة';
+                        btn.disabled = true;
+                    }
+                } else {
+                    showToast('❌ فشل في الاشتراك. تحقق من Console للتفاصيل', 'error');
+                }
+            } else {
+                showToast('⚠️ يرجى السماح بالإشعارات من إعدادات المتصفح', 'error');
+            }
+        } catch (error) {
+            console.error('خطأ في تفعيل الإشعارات:', error);
+            showToast(`❌ خطأ: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * اختبار الإشعارات
+     */
     async testNotification() {
         const results = [];
         
