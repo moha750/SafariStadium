@@ -656,7 +656,7 @@ class StaffPage {
             : (field === 'Safari 2')
                 ? 'ملعب الكأس'
                 : field;
-        const message = `مرحباً ${name}،\n\nتأكيد حجزك في ملاعب سفاري:\n📍 الملعب: ${fieldDisplayName}\n📅 التاريخ: ${date}\n⏰ الوقت: ${time}\n\nنتمنى لك تجربة ممتعة! ⚽`;
+        const message = `مرحباً ${name}،\n\nتأكيد حجزك:\n📍 الملعب: ${fieldDisplayName}\n📅 التاريخ: ${date}\n⏰ الوقت: ${time}\n\nنتمنى لك تجربة ممتعة! ⚽`;
         const whatsappUrl = `https://wa.me/${phone.replace(/^0/, '966')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     }
