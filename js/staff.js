@@ -4,7 +4,7 @@
  */
 
 import supabaseClient from './supabase-client.js';
-import { showToast, formatDate, formatTime, formatDateTime, formatTimeAmPmStrict } from './utils.js';
+import { showToast, formatDate, formatTime, formatDateTime, formatTimeRangeArabicStrict } from './utils.js';
 import notificationManager from './notifications.js';
 
 class StaffPage {
@@ -310,7 +310,7 @@ class StaffPage {
                     <button class="btn-view-customer" data-id="${booking.id}">
                         📋 عرض التفاصيل الكاملة
                     </button>
-                    <button class="btn-whatsapp-staff" data-phone="${booking.phone}" data-name="${booking.customer_name}" data-field="${booking.field_name}" data-date="${booking.booking_date}" data-time="${booking.start_time}">
+                    <button class="btn-whatsapp-staff" data-phone="${booking.phone}" data-name="${booking.customer_name}" data-field="${booking.field_name}" data-date="${booking.booking_date}" data-start-time="${booking.start_time}" data-end-time="${booking.end_time}">
                         📱 واتساب
                     </button>
                 </div>
@@ -341,8 +341,9 @@ class StaffPage {
                 const name = e.target.dataset.name;
                 const field = e.target.dataset.field;
                 const date = e.target.dataset.date;
-                const time = e.target.dataset.time;
-                this.sendWhatsApp(phone, name, field, date, time);
+                const startTime = e.target.dataset.startTime;
+                const endTime = e.target.dataset.endTime;
+                this.sendWhatsApp(phone, name, field, date, startTime, endTime);
             });
         });
 
@@ -650,14 +651,14 @@ class StaffPage {
     /**
      * إرسال رسالة واتساب
      */
-    sendWhatsApp(phone, name, field, date, time) {
-        const formattedTime = formatTimeAmPmStrict(time);
+    sendWhatsApp(phone, name, field, date, startTime, endTime) {
+        const formattedTimeRange = formatTimeRangeArabicStrict(startTime, endTime);
         const fieldDisplayName = (field === 'Safari 1')
             ? 'ملعب سفاري'
             : (field === 'Safari 2')
                 ? 'ملعب الكأس'
                 : field;
-        const message = `مرحباً ${name}،\n\nتأكيد حجزك:\n📍 الملعب: ${fieldDisplayName}\n📅 التاريخ: ${date}\n⏰ الوقت: ${formattedTime}\n\nنتمنى لك تجربة ممتعة! ⚽`;
+        const message = `مرحباً ${name}،\n\nتأكيد حجزك:\n📍 الملعب: ${fieldDisplayName}\n📅 التاريخ: ${date}\n⏰ الوقت: ${formattedTimeRange}\n\nنتمنى لك تجربة ممتعة! ⚽`;
         const whatsappUrl = `https://wa.me/${phone.replace(/^0/, '966')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     }

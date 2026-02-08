@@ -138,3 +138,31 @@ export function formatTimeAmPmStrict(timeString) {
 
     return `${hours12}:${minutesPadded} ${period}`;
 }
+
+export function formatTimeArabicStrict(timeString) {
+    if (!timeString) return '';
+
+    const parts = String(timeString).split(':');
+    const hours24 = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+
+    if (Number.isNaN(hours24) || Number.isNaN(minutes)) {
+        return '';
+    }
+
+    const period = hours24 >= 12 ? 'مساءً' : 'صباحًا';
+    const hours12Raw = hours24 % 12;
+    const hours12 = hours12Raw === 0 ? 12 : hours12Raw;
+    const minutesPadded = String(minutes).padStart(2, '0');
+
+    return `${hours12}:${minutesPadded} ${period}`;
+}
+
+export function formatTimeRangeArabicStrict(startTime, endTime) {
+    const start = formatTimeArabicStrict(startTime);
+    const end = formatTimeArabicStrict(endTime);
+
+    if (!start || !end) return '';
+
+    return `من ${start} إلى ${end}`;
+}
