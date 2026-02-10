@@ -36,9 +36,9 @@ class BookingApp {
         // كل فترة ساعة ونصف (90 دقيقة)
         const slotDuration = 90; // دقيقة
         
-        // الفترات من 3:30 عصراً حتى 11:30 مساءً
+        // الفترات من 3:30 عصراً حتى 11:00 مساءً (آخر فترة تبدأ 11:00 م وتنتهي 12:30 ص)
         let currentTime = 15 * 60 + 30; // 15:30 بالدقائق
-        const endOfDay = 23 * 60 + 30; // 23:30 بالدقائق
+        const endOfDay = 23 * 60; // 23:00 بالدقائق (آخر فترة تبدأ 11:00 م)
         
         while (currentTime <= endOfDay) {
             const startHour = Math.floor(currentTime / 60);
@@ -46,7 +46,8 @@ class BookingApp {
             const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
             
             const endTimeMinutes = currentTime + slotDuration;
-            const endHour = Math.floor(endTimeMinutes / 60);
+            // معالجة الأوقات التي تتجاوز منتصف الليل
+            const endHour = Math.floor(endTimeMinutes / 60) % 24;
             const endMinute = endTimeMinutes % 60;
             const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
             
@@ -54,8 +55,8 @@ class BookingApp {
             currentTime += slotDuration;
         }
         
-        // الفترات من 12:00 منتصف الليل حتى 5:00 فجراً
-        currentTime = 0; // 00:00
+        // الفترات من 12:30 منتصف الليل حتى 5:00 فجراً
+        currentTime = 0 * 60 + 30; // 00:30
         const endOfNight = 5 * 60; // 05:00
         
         while (currentTime < endOfNight) {
@@ -251,8 +252,21 @@ class BookingApp {
     formatTimeDisplay(time) {
         const [hours, minutes] = time.split(':');
         const hour = parseInt(hours);
-        const period = hour >= 12 ? 'م' : 'ص';
-        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        
+        // تحديد الفترة (صباحاً أم مساءً)
+        // من 0-11 صباحاً (ص)، من 12-23 مساءً (م)
+        const period = hour < 12 ? 'ص' : 'م';
+        
+        // تحويل الساعة إلى نظام 12 ساعة
+        let displayHour;
+        if (hour === 0) {
+            displayHour = 12; // منتصف الليل
+        } else if (hour > 12) {
+            displayHour = hour - 12; // بعد الظهر/المساء
+        } else {
+            displayHour = hour; // صباحاً أو الظهر
+        }
+        
         return `${displayHour}:${minutes} ${period}`;
     }
 
