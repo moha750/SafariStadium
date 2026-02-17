@@ -183,24 +183,37 @@ class BookingApp {
         container.innerHTML = '<p class="loading-slots">جاري تحميل الفترات المتاحة...</p>';
         
         try {
+            // جلب الفترات المتاحة لهذا اليوم (ثابتة أو مستثناة)
+            const availableSlotsResult = await supabaseClient.getAvailableSlots({
+                field_name: this.selectedField,
+                date: selectedDate
+            });
+            
+            if (!availableSlotsResult.success || !availableSlotsResult.slots) {
+                container.innerHTML = '<p class="loading-slots">حدث خطأ في تحميل الفترات</p>';
+                return;
+            }
+            
+            const availableSlots = availableSlotsResult.slots;
+            
             // جلب الحجوزات الموجودة لهذا التاريخ والملعب
             const bookedSlots = await this.getBookedSlots(selectedDate);
             
             // عرض الفترات
             container.innerHTML = '';
-            this.timeSlots.forEach(slot => {
+            availableSlots.forEach(slot => {
+                const slotObj = {
+                    startTime: slot.start,
+                    endTime: slot.end
+                };
+                
                 const isBooked = bookedSlots.some(booked => {
-                    // إزالة الثواني من الوقت القادم من قاعدة البيانات
-                    const dbStartTime = booked.start_time.substring(0, 5); // "16:00:00" -> "16:00"
+                    const dbStartTime = booked.start_time.substring(0, 5);
                     const dbEndTime = booked.end_time.substring(0, 5);
-                    const match = dbStartTime === slot.startTime && dbEndTime === slot.endTime;
-                    if (match) {
-                        console.log('فترة محجوزة:', slot.startTime, '-', slot.endTime);
-                    }
-                    return match;
+                    return dbStartTime === slot.start && dbEndTime === slot.end;
                 });
                 
-                const slotElement = this.createTimeSlotElement(slot, isBooked);
+                const slotElement = this.createTimeSlotElement(slotObj, isBooked);
                 container.appendChild(slotElement);
             });
         } catch (error) {

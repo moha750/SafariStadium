@@ -145,6 +145,90 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ========================================
+-- دالة لإضافة استثناء لنطاق تواريخ
+-- ========================================
+
+CREATE OR REPLACE FUNCTION set_date_range_exception(
+    p_field_name VARCHAR,
+    p_start_date DATE,
+    p_end_date DATE,
+    p_start_time TIME,
+    p_end_time TIME,
+    p_notes TEXT DEFAULT NULL
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_current_date DATE;
+    v_count INTEGER := 0;
+    v_custom_slots JSONB;
+    v_current_time TIME;
+    v_slots JSONB := '[]'::JSONB;
+    v_slot JSONB;
+BEGIN
+    -- بناء الفترات المخصصة
+    v_current_time := p_start_time;
+    
+    WHILE v_current_time < p_end_time LOOP
+        v_slot := jsonb_build_object(
+            'start', v_current_time::TEXT,
+            'end', (v_current_time + INTERVAL '1.5 hours')::TIME::TEXT,
+            'label', 'فترة مخصصة'
+        );
+        
+        IF (v_current_time + INTERVAL '1.5 hours')::TIME > p_end_time THEN
+            v_slot := jsonb_set(v_slot, '{end}', to_jsonb(p_end_time::TEXT));
+        END IF;
+        
+        v_slots := v_slots || v_slot;
+        v_current_time := v_current_time + INTERVAL '1.5 hours';
+    END LOOP;
+    
+    -- تطبيق الاستثناء على كل يوم في النطاق
+    v_current_date := p_start_date;
+    
+    WHILE v_current_date <= p_end_date LOOP
+        INSERT INTO daily_exceptions (field_name, exception_date, custom_slots, notes)
+        VALUES (p_field_name, v_current_date, v_slots, p_notes)
+        ON CONFLICT (field_name, exception_date)
+        DO UPDATE SET 
+            custom_slots = EXCLUDED.custom_slots,
+            notes = EXCLUDED.notes,
+            updated_at = NOW();
+        
+        v_count := v_count + 1;
+        v_current_date := v_current_date + INTERVAL '1 day';
+    END LOOP;
+    
+    RETURN v_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ========================================
+-- دالة لإضافة فترات مخصصة يدوياً (فترات متعددة غير متصلة)
+-- ========================================
+
+CREATE OR REPLACE FUNCTION set_custom_slots(
+    p_field_name VARCHAR,
+    p_date DATE,
+    p_custom_slots JSONB,
+    p_notes TEXT DEFAULT NULL
+)
+RETURNS JSONB AS $$
+BEGIN
+    -- إدراج أو تحديث الاستثناء بالفترات المخصصة
+    INSERT INTO daily_exceptions (field_name, exception_date, custom_slots, notes)
+    VALUES (p_field_name, p_date, p_custom_slots, p_notes)
+    ON CONFLICT (field_name, exception_date)
+    DO UPDATE SET 
+        custom_slots = EXCLUDED.custom_slots,
+        notes = EXCLUDED.notes,
+        updated_at = NOW();
+    
+    RETURN p_custom_slots;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ========================================
 -- دالة لحذف استثناء (العودة للفترات الثابتة)
 -- ========================================
 
@@ -155,7 +239,7 @@ CREATE OR REPLACE FUNCTION remove_daily_exception(
 RETURNS BOOLEAN AS $$
 BEGIN
     DELETE FROM daily_exceptions
-    WHERE field_name = p_field_name
+    WHERE field_name = p_field_name 
     AND exception_date = p_date;
     
     RETURN FOUND;

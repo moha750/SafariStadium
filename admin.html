@@ -162,16 +162,6 @@
                     <div class="time-slots-reference" style="margin-bottom: 2rem;">
                         <h4>الفترات الثابتة الافتراضية (9 فترات يومياً):</h4>
                         <div class="predefined-slots">
-                            <div class="predefined-slot">3:30 م - 5:00 م</div>
-                            <div class="predefined-slot">5:00 م - 6:30 م</div>
-                            <div class="predefined-slot">6:30 م - 8:00 م</div>
-                            <div class="predefined-slot">8:00 م - 9:30 م</div>
-                            <div class="predefined-slot">9:30 م - 11:00 م</div>
-                            <div class="predefined-slot">11:00 م - 12:30 ص</div>
-                            <div class="predefined-slot">12:30 ص - 2:00 ص</div>
-                            <div class="predefined-slot">2:00 ص - 3:30 ص</div>
-                            <div class="predefined-slot">3:30 ص - 5:00 ص</div>
-                        </div>
                     </div>
 
                     <div class="form-grid">
@@ -183,34 +173,61 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="exceptionDate">التاريخ <span style="color: red;">*</span></label>
-                            <input type="date" id="exceptionDate" placeholder="مثال: 2030-05-15">
+                            <label for="exceptionStartDate">من تاريخ <span style="color: red;">*</span></label>
+                            <input type="date" id="exceptionStartDate" placeholder="مثال: 2030-05-15">
                         </div>
                         <div class="form-group">
-                            <label for="exceptionStartTime">وقت البداية <span style="color: red;">*</span></label>
-                            <input type="time" id="exceptionStartTime" placeholder="مثال: 12:30">
-                        </div>
-                        <div class="form-group">
-                            <label for="exceptionEndTime">وقت النهاية <span style="color: red;">*</span></label>
-                            <input type="time" id="exceptionEndTime" placeholder="مثال: 17:00">
+                            <label for="exceptionEndDate">إلى تاريخ <span style="color: red;">*</span></label>
+                            <input type="date" id="exceptionEndDate" placeholder="مثال: 2030-05-17">
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-top: 1rem;">
+                    <!-- منطقة الفترات المخصصة -->
+                    <div id="customSlotsContainer" style="margin-top: 1.5rem;">
+                        <h4 style="margin-bottom: 1rem; font-size: 1rem; color: #374151;">⏰ الفترات الزمنية</h4>
+                        <div class="custom-slot-item" data-slot-index="0">
+                            <div class="form-grid" style="background: #f9fafb; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <div class="form-group">
+                                    <label>من الساعة <span style="color: red;">*</span></label>
+                                    <input type="time" class="slot-start-time" placeholder="مثال: 13:00">
+                                </div>
+                                <div class="form-group">
+                                    <label>إلى الساعة <span style="color: red;">*</span></label>
+                                    <input type="time" class="slot-end-time" placeholder="مثال: 16:00">
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: flex-end;">
+                                    <button type="button" class="btn btn-danger remove-slot-btn" style="width: 100%; display: none;">
+                                        🗑️ حذف
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button class="btn btn-secondary" id="addSlotBtn" style="flex: 1;">
+                            ➕ إضافة فترة أخرى
+                        </button>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.5rem;">
                         <label for="exceptionNotes">ملاحظات (اختياري)</label>
-                        <textarea id="exceptionNotes" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit;" placeholder="مثال: يوم عطلة - ساعات عمل مخفضة"></textarea>
+                        <textarea id="exceptionNotes" rows="2" placeholder="مثال: يوم عطلة - ساعات عمل خاصة"></textarea>
                     </div>
 
                     <div class="action-buttons" style="margin-top: 1.5rem;">
                         <button class="btn btn-primary" id="addExceptionBtn">
-                            ✅ إضافة الاستثناء
+                            ✅ حفظ الاستثناء
                         </button>
                     </div>
 
                     <div class="info-box" style="margin-top: 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));">
                         <p style="font-size: 0.875rem;">
-                            <strong>مثال:</strong> إذا اخترت التاريخ 15/5/2030 من الساعة 12:30 إلى 5:00 مساءً، 
-                            سيتم إنشاء فترات مخصصة (كل ساعة ونصف) لهذا اليوم فقط، وسيتم استثناء الفترات الثابتة.
+                            <strong>أمثلة:</strong><br>
+                            • <strong>يوم واحد - فترة واحدة:</strong> من 15/5 إلى 15/5 - فترة من 12:30 إلى 5:00 م<br>
+                            • <strong>يوم واحد - فترتين:</strong> من 20/5 إلى 20/5 - فترة 1:00-4:00 م + فترة 7:00-9:00 م<br>
+                            • <strong>3 أيام - فترة واحدة:</strong> من 15/5 إلى 17/5 - فترة من 2:00 م إلى 11:00 م<br>
+                            • <strong>أسبوع - فترتين:</strong> من 1/6 إلى 7/6 - فترة 10:00 ص-2:00 م + فترة 6:00-10:00 م<br>
                         </p>
                     </div>
                 </div>

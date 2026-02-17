@@ -315,6 +315,72 @@ class SupabaseClient {
             return { success: false, error: error.message, data: [] };
         }
     }
+
+    /**
+     * إضافة استثناء لنطاق تواريخ
+     * @param {Object} params - معاملات الاستثناء
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async setDateRangeException(params) {
+        try {
+            const { field_name, start_date, end_date, start_time, end_time, notes } = params;
+            
+            const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/set_date_range_exception`, {
+                method: 'POST',
+                headers: this.headers,
+                body: JSON.stringify({
+                    p_field_name: field_name,
+                    p_start_date: start_date,
+                    p_end_date: end_date,
+                    p_start_time: start_time,
+                    p_end_time: end_time,
+                    p_notes: notes || null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في إضافة الاستثناء');
+            }
+
+            const count = await response.json();
+            return { success: true, count };
+        } catch (error) {
+            console.error('خطأ في إضافة الاستثناء:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * إضافة فترات مخصصة متعددة (غير متصلة)
+     * @param {Object} params - معاملات الفترات المخصصة
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async setCustomSlots(params) {
+        try {
+            const { field_name, date, slots, notes } = params;
+            
+            const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/set_custom_slots`, {
+                method: 'POST',
+                headers: this.headers,
+                body: JSON.stringify({
+                    p_field_name: field_name,
+                    p_date: date,
+                    p_custom_slots: slots,
+                    p_notes: notes || null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في إضافة الفترات المخصصة');
+            }
+
+            const data = await response.json();
+            return { success: true, data };
+        } catch (error) {
+            console.error('خطأ في إضافة الفترات المخصصة:', error);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 // تصدير نسخة واحدة من العميل
