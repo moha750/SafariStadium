@@ -7,6 +7,7 @@ import supabaseClient from './supabase-client.js';
 import { showToast, formatDate, formatTime, formatDateTime, formatTimeRangeArabicStrict } from './utils.js';
 import notificationManager from './notifications.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import TimeManagement from './time-management.js';
 
 class AdminDashboard {
     constructor() {
@@ -16,6 +17,7 @@ class AdminDashboard {
             field_name: 'all'
         };
         this.currentTab = 'all';
+        this.timeManagement = null;
         
         this.init();
     }
@@ -27,6 +29,7 @@ class AdminDashboard {
         this.checkAuth();
         this.setupEventListeners();
         this.loadBookings();
+        this.timeManagement = new TimeManagement();
     }
 
     /**
@@ -378,8 +381,25 @@ class AdminDashboard {
         });
         document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
         
-        // تطبيق التصفية
-        this.filterBookings();
+        // إخفاء/إظهار الأقسام المناسبة
+        const bookingsContainer = document.getElementById('bookingsContainer');
+        const timeManagementContainer = document.getElementById('timeManagementContainer');
+        const statsGrid = document.querySelector('.stats-grid');
+        
+        if (tab === 'time-management') {
+            // إظهار قسم إدارة الوقت
+            if (bookingsContainer) bookingsContainer.style.display = 'none';
+            if (timeManagementContainer) timeManagementContainer.style.display = 'block';
+            if (statsGrid) statsGrid.style.display = 'none';
+        } else {
+            // إظهار قسم الحجوزات
+            if (bookingsContainer) bookingsContainer.style.display = 'block';
+            if (timeManagementContainer) timeManagementContainer.style.display = 'none';
+            if (statsGrid) statsGrid.style.display = 'grid';
+            
+            // تطبيق التصفية
+            this.filterBookings();
+        }
     }
 
     /**

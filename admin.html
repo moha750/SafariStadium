@@ -8,6 +8,7 @@
     <link rel="manifest" href="manifest-admin.json">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/time-management.css">
 </head>
 <body>
     <header class="header">
@@ -74,6 +75,10 @@
                         <span class="tab-label">الجاري حجزهم</span>
                         <span class="tab-count" id="activeTabCount">0</span>
                     </button>
+                    <button class="tab-btn" data-tab="time-management">
+                        <span class="tab-icon">⏰</span>
+                        <span class="tab-label">إدارة الوقت</span>
+                    </button>
                 </div>
             </div>
 
@@ -108,7 +113,7 @@
                 </div>
             </div>
 
-            <div class="bookings-container">
+            <div class="bookings-container" id="bookingsContainer">
                 <div id="loadingSpinner" class="loading-spinner">
                     <div class="spinner"></div>
                     <p>جاري تحميل الحجوزات...</p>
@@ -132,6 +137,104 @@
                     <div class="empty-icon">📋</div>
                     <h3>لا توجد حجوزات</h3>
                     <p>لم يتم العثور على أي حجوزات بعد</p>
+                </div>
+            </div>
+
+            <!-- قسم إدارة الوقت المبسط -->
+            <div class="time-management-container" id="timeManagementContainer" style="display: none;">
+                
+                <!-- معلومات النظام -->
+                <div class="info-box" style="margin-bottom: 2rem;">
+                    <p>
+                        <span class="info-icon">ℹ️</span>
+                        <strong>كيف يعمل النظام:</strong> الفترات الزمنية الثابتة (9 فترات يومياً) موجودة دائماً لجميع الأيام.
+                        يمكنك استثناء يوم معين وتحديد فترات مخصصة له.
+                    </p>
+                </div>
+
+                <!-- قسم إضافة استثناء -->
+                <div class="exception-section">
+                    <div class="section-header">
+                        <h3>📅 استثناء يوم معين</h3>
+                        <p>حدد يوماً ووقت عمل مخصص له (سيتم استثناؤه من الفترات الثابتة)</p>
+                    </div>
+
+                    <div class="time-slots-reference" style="margin-bottom: 2rem;">
+                        <h4>الفترات الثابتة الافتراضية (9 فترات يومياً):</h4>
+                        <div class="predefined-slots">
+                            <div class="predefined-slot">3:30 م - 5:00 م</div>
+                            <div class="predefined-slot">5:00 م - 6:30 م</div>
+                            <div class="predefined-slot">6:30 م - 8:00 م</div>
+                            <div class="predefined-slot">8:00 م - 9:30 م</div>
+                            <div class="predefined-slot">9:30 م - 11:00 م</div>
+                            <div class="predefined-slot">11:00 م - 12:30 ص</div>
+                            <div class="predefined-slot">12:30 ص - 2:00 ص</div>
+                            <div class="predefined-slot">2:00 ص - 3:30 ص</div>
+                            <div class="predefined-slot">3:30 ص - 5:00 ص</div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="exceptionFieldName">اختر الملعب <span style="color: red;">*</span></label>
+                            <select id="exceptionFieldName">
+                                <option value="ملعب سفاري">ملعب سفاري</option>
+                                <option value="ملعب الكأس">ملعب الكأس</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="exceptionDate">التاريخ <span style="color: red;">*</span></label>
+                            <input type="date" id="exceptionDate" placeholder="مثال: 2030-05-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="exceptionStartTime">وقت البداية <span style="color: red;">*</span></label>
+                            <input type="time" id="exceptionStartTime" placeholder="مثال: 12:30">
+                        </div>
+                        <div class="form-group">
+                            <label for="exceptionEndTime">وقت النهاية <span style="color: red;">*</span></label>
+                            <input type="time" id="exceptionEndTime" placeholder="مثال: 17:00">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="exceptionNotes">ملاحظات (اختياري)</label>
+                        <textarea id="exceptionNotes" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: inherit;" placeholder="مثال: يوم عطلة - ساعات عمل مخفضة"></textarea>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 1.5rem;">
+                        <button class="btn btn-primary" id="addExceptionBtn">
+                            ✅ إضافة الاستثناء
+                        </button>
+                    </div>
+
+                    <div class="info-box" style="margin-top: 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));">
+                        <p style="font-size: 0.875rem;">
+                            <strong>مثال:</strong> إذا اخترت التاريخ 15/5/2030 من الساعة 12:30 إلى 5:00 مساءً، 
+                            سيتم إنشاء فترات مخصصة (كل ساعة ونصف) لهذا اليوم فقط، وسيتم استثناء الفترات الثابتة.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- قسم عرض الاستثناءات -->
+                <div class="view-exceptions-section" style="margin-top: 3rem;">
+                    <div class="section-header">
+                        <h3>📋 الأيام المستثناة</h3>
+                        <p>عرض جميع الأيام التي تم استثناؤها من الفترات الثابتة</p>
+                    </div>
+
+                    <div id="tmLoadingSpinner" class="tm-loading-spinner" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>جاري تحميل الاستثناءات...</p>
+                    </div>
+
+                    <div id="exceptionsContainer" style="display: none;">
+                    </div>
+
+                    <div id="tmEmptyState" class="tm-empty-state" style="display: none;">
+                        <div class="empty-icon">📅</div>
+                        <h3>لا توجد استثناءات</h3>
+                        <p>جميع الأيام تعمل بالفترات الثابتة الافتراضية</p>
+                    </div>
                 </div>
             </div>
         </div>

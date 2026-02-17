@@ -186,6 +186,135 @@ class SupabaseClient {
             return false;
         }
     }
+
+    /**
+     * الحصول على الفترات المتاحة ليوم معين
+     * @param {Object} params - معاملات البحث
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async getAvailableSlots(params) {
+        try {
+            const { field_name, date } = params;
+            
+            const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/get_available_slots`, {
+                method: 'POST',
+                headers: this.headers,
+                body: JSON.stringify({
+                    p_field_name: field_name,
+                    p_date: date
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في جلب الفترات المتاحة');
+            }
+
+            const slots = await response.json();
+            return { success: true, slots };
+        } catch (error) {
+            console.error('خطأ في جلب الفترات:', error);
+            return { success: false, error: error.message, slots: [] };
+        }
+    }
+
+    /**
+     * إضافة استثناء يومي (فترات مخصصة)
+     * @param {Object} params - معاملات الاستثناء
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async setDailyException(params) {
+        try {
+            const { field_name, date, start_time, end_time, notes } = params;
+            
+            const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/set_daily_exception`, {
+                method: 'POST',
+                headers: this.headers,
+                body: JSON.stringify({
+                    p_field_name: field_name,
+                    p_date: date,
+                    p_start_time: start_time,
+                    p_end_time: end_time,
+                    p_notes: notes || null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في إضافة الاستثناء');
+            }
+
+            const customSlots = await response.json();
+            return { success: true, customSlots };
+        } catch (error) {
+            console.error('خطأ في إضافة الاستثناء:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * حذف استثناء يومي (العودة للفترات الثابتة)
+     * @param {Object} params - معاملات الحذف
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async removeDailyException(params) {
+        try {
+            const { field_name, date } = params;
+            
+            const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/remove_daily_exception`, {
+                method: 'POST',
+                headers: this.headers,
+                body: JSON.stringify({
+                    p_field_name: field_name,
+                    p_date: date
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في حذف الاستثناء');
+            }
+
+            const result = await response.json();
+            return { success: true, removed: result };
+        } catch (error) {
+            console.error('خطأ في حذف الاستثناء:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * جلب جميع الاستثناءات اليومية
+     * @param {Object} filters - فلاتر اختيارية
+     * @returns {Promise<Object>} - نتيجة العملية
+     */
+    async getDailyExceptions(filters = {}) {
+        try {
+            let url = `${this.supabaseUrl}/rest/v1/daily_exceptions?order=exception_date.asc`;
+
+            if (filters.field_name) {
+                url += `&field_name=eq.${encodeURIComponent(filters.field_name)}`;
+            }
+            if (filters.start_date) {
+                url += `&exception_date=gte.${filters.start_date}`;
+            }
+            if (filters.end_date) {
+                url += `&exception_date=lte.${filters.end_date}`;
+            }
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: this.headers
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل في جلب الاستثناءات');
+            }
+
+            const data = await response.json();
+            return { success: true, data };
+        } catch (error) {
+            console.error('خطأ في جلب الاستثناءات:', error);
+            return { success: false, error: error.message, data: [] };
+        }
+    }
 }
 
 // تصدير نسخة واحدة من العميل
