@@ -10,15 +10,16 @@ class TimeManagement {
     constructor() {
         this.exceptions = [];
         this.defaultSlots = [
-            { start: '15:30', end: '17:00', label: '3:30 م - 5:00 م' },
-            { start: '17:00', end: '18:30', label: '5:00 م - 6:30 م' },
-            { start: '18:30', end: '20:00', label: '6:30 م - 8:00 م' },
-            { start: '20:00', end: '21:30', label: '8:00 م - 9:30 م' },
-            { start: '21:30', end: '23:00', label: '9:30 م - 11:00 م' },
-            { start: '23:00', end: '00:30', label: '11:00 م - 12:30 ص' },
-            { start: '00:30', end: '02:00', label: '12:30 ص - 2:00 ص' },
-            { start: '02:00', end: '03:30', label: '2:00 ص - 3:30 ص' },
-            { start: '03:30', end: '05:00', label: '3:30 ص - 5:00 ص' }
+            { start: '14:30', end: '16:00', label: '2:30 م - 4:00 م' },
+            { start: '16:00', end: '17:30', label: '4:00 م - 5:30 م' },
+            { start: '17:30', end: '19:00', label: '5:30 م - 7:00 م' },
+            { start: '19:00', end: '20:30', label: '7:00 م - 8:30 م' },
+            { start: '20:30', end: '22:00', label: '8:30 م - 10:00 م' },
+            { start: '22:00', end: '23:30', label: '10:00 م - 11:30 م' },
+            { start: '23:30', end: '01:00', label: '11:30 م - 1:00 ص' },
+            { start: '01:00', end: '02:30', label: '1:00 ص - 2:30 ص' },
+            { start: '02:30', end: '04:00', label: '2:30 ص - 4:00 ص' },
+            { start: '04:00', end: '05:30', label: '4:00 ص - 5:30 ص' }
         ];
         
         this.init();

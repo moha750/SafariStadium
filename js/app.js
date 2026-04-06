@@ -28,51 +28,51 @@ class BookingApp {
 
     /**
      * توليد الفترات الزمنية المتاحة
-     * من 3:30 عصراً إلى 5:00 فجراً، كل فترة ساعة ونصف
+     * من 2:30 عصراً إلى 5:30 فجراً، كل فترة ساعة ونصف
      */
     generateTimeSlots() {
         const slots = [];
-        
+
         // كل فترة ساعة ونصف (90 دقيقة)
         const slotDuration = 90; // دقيقة
-        
-        // الفترات من 3:30 عصراً حتى 11:00 مساءً (آخر فترة تبدأ 11:00 م وتنتهي 12:30 ص)
-        let currentTime = 15 * 60 + 30; // 15:30 بالدقائق
-        const endOfDay = 23 * 60; // 23:00 بالدقائق (آخر فترة تبدأ 11:00 م)
-        
+
+        // الفترات من 2:30 عصراً حتى 11:30 مساءً (آخر فترة تبدأ 11:30 م وتنتهي 1:00 ص)
+        let currentTime = 14 * 60 + 30; // 14:30 بالدقائق
+        const endOfDay = 23 * 60 + 30; // 23:30 بالدقائق (آخر فترة تبدأ 11:30 م)
+
         while (currentTime <= endOfDay) {
             const startHour = Math.floor(currentTime / 60);
             const startMinute = currentTime % 60;
             const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
-            
+
             const endTimeMinutes = currentTime + slotDuration;
             // معالجة الأوقات التي تتجاوز منتصف الليل
             const endHour = Math.floor(endTimeMinutes / 60) % 24;
             const endMinute = endTimeMinutes % 60;
             const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-            
+
             slots.push({ startTime, endTime });
             currentTime += slotDuration;
         }
-        
-        // الفترات من 12:30 منتصف الليل حتى 5:00 فجراً
-        currentTime = 0 * 60 + 30; // 00:30
-        const endOfNight = 5 * 60; // 05:00
-        
-        while (currentTime < endOfNight) {
+
+        // الفترات من 1:00 بعد منتصف الليل حتى 5:30 فجراً
+        currentTime = 1 * 60; // 01:00
+        const endOfNight = 4 * 60; // 04:00 (آخر فترة تبدأ 4:00 ص وتنتهي 5:30 ص)
+
+        while (currentTime <= endOfNight) {
             const startHour = Math.floor(currentTime / 60);
             const startMinute = currentTime % 60;
             const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
-            
+
             const endTimeMinutes = currentTime + slotDuration;
             const endHour = Math.floor(endTimeMinutes / 60);
             const endMinute = endTimeMinutes % 60;
             const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-            
+
             slots.push({ startTime, endTime });
             currentTime += slotDuration;
         }
-        
+
         return slots;
     }
 
