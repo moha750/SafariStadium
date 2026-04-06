@@ -195,10 +195,10 @@ class BookingApp {
             }
             
             const availableSlots = availableSlotsResult.slots;
-            
+
             // جلب الحجوزات الموجودة لهذا التاريخ والملعب
             const bookedSlots = await this.getBookedSlots(selectedDate);
-            
+
             // عرض الفترات
             container.innerHTML = '';
             availableSlots.forEach(slot => {
@@ -206,13 +206,15 @@ class BookingApp {
                     startTime: slot.start,
                     endTime: slot.end
                 };
-                
+
+                // كشف التداخل: الفترة محجوزة إذا تتداخل مع أي حجز موجود
+                // (يدعم الحجوزات القديمة بأوقات مختلفة عن الجدول الجديد)
                 const isBooked = bookedSlots.some(booked => {
                     const dbStartTime = booked.start_time.substring(0, 5);
                     const dbEndTime = booked.end_time.substring(0, 5);
-                    return dbStartTime === slot.start && dbEndTime === slot.end;
+                    return this.timeRangesOverlap(slot.start, slot.end, dbStartTime, dbEndTime);
                 });
-                
+
                 const slotElement = this.createTimeSlotElement(slotObj, isBooked);
                 container.appendChild(slotElement);
             });
@@ -220,6 +222,37 @@ class BookingApp {
             console.error('خطأ في تحميل الفترات:', error);
             container.innerHTML = '<p class="loading-slots">حدث خطأ في تحميل الفترات</p>';
         }
+    }
+
+    /**
+     * تحويل وقت بصيغة HH:MM إلى دقائق منذ بداية اليوم
+     * مع معالجة الأوقات بعد منتصف الليل (تُضاف لها 24 ساعة لتكون متتابعة)
+     */
+    timeToMinutes(time) {
+        const [h, m] = time.split(':').map(Number);
+        let minutes = h * 60 + m;
+        // الأوقات قبل الظهر تعتبر بعد منتصف الليل (نفس يوم الحجز المسائي)
+        if (h < 12) {
+            minutes += 24 * 60;
+        }
+        return minutes;
+    }
+
+    /**
+     * التحقق من تداخل فترتين زمنيتين
+     * يدعم الفترات التي تعبر منتصف الليل
+     */
+    timeRangesOverlap(start1, end1, start2, end2) {
+        const s1 = this.timeToMinutes(start1);
+        let e1 = this.timeToMinutes(end1);
+        const s2 = this.timeToMinutes(start2);
+        let e2 = this.timeToMinutes(end2);
+
+        // إذا كان وقت النهاية أقل من البداية، فالفترة تعبر منتصف الليل
+        if (e1 <= s1) e1 += 24 * 60;
+        if (e2 <= s2) e2 += 24 * 60;
+
+        return s1 < e2 && s2 < e1;
     }
 
     /**
