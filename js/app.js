@@ -462,15 +462,15 @@ class BookingApp {
                 return;
             }
 
-            // إنشاء الحجز
-            // const result = await supabaseClient.createBooking({
-            //     field_name: formData.fieldName,
-            //     customer_name: formData.customerName.trim(),
-            //     phone: formData.phone,
-            //     booking_date: formData.bookingDate,
-            //     start_time: this.selectedSlot.startTime,
-            //     end_time: this.selectedSlot.endTime
-            // });
+            إنشاء الحجز
+            const result = await supabaseClient.createBooking({
+                field_name: formData.fieldName,
+                customer_name: formData.customerName.trim(),
+                phone: formData.phone,
+                booking_date: formData.bookingDate,
+                start_time: this.selectedSlot.startTime,
+                end_time: this.selectedSlot.endTime
+            });
 
             if (result.success) {
                 showToast('تم إرسال طلب الحجز بنجاح! سيتم التواصل معك قريباً', 'success');
